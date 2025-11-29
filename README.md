@@ -20,6 +20,23 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Brand Fonts (PEDRO & CHARLES & KEITH)
+
+The Indonesian PEDRO Women Bags page relies on an Adobe Fonts kit (`https://use.typekit.net/vfa3pfk.css`) that exposes **Proxima Nova** (sans) and **Cormorant Garamond** (serif). CHARLES & KEITH uses another Adobe Fonts kit (`https://use.typekit.net/exv2fdk.css`) that serves **Futura PT** (regular and bold weights).
+
+These kits are imported globally from `app/globals.css`, and the project now exposes four utilities so you can opt into the exact brand stacks anywhere in the UI:
+
+- `font-pedro-sans` → Proxima Nova stack
+- `font-pedro-serif` → Cormorant Garamond stack
+- `font-ck-sans` → Futura PT stack
+- `font-ck-bold` → Futura PT bold stack
+
+> ℹ️ The Adobe kits belong to the respective brands. They work for local development, but using them in production requires that your domain is whitelisted in your own Adobe Fonts account or that you self-host licensed font files.
+
+### Google Fonts availability
+
+Only **Cormorant Garamond** is offered on Google Fonts. It is loaded via `next/font/google` inside `app/layout.tsx`, exposing the `--font-cormorant-garamond` variable that backs the `font-pedro-serif` utility. **Proxima Nova** and **Futura PT** are not in Google Fonts, so they still rely on the Adobe kits (or a separately licensed/self-hosted build).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
