@@ -1,26 +1,35 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#1a1a1a] text-white pt-16 pb-8 border-t border-gray-800">
+    <footer className="bg-primary text-white pt-16 pb-8 border-t border-gray-800">
       <div className="container">
         
-        {/* Top Section: Brand Promise & Newsletter - Split layout typical of luxury sites */}
+        {/* Top Section: Brand Promise & Newsletter */}
         <div className="flex flex-col lg:flex-row justify-between gap-12 mb-16 border-b border-gray-800 pb-16">
             <div className="max-w-md">
-                <h3 className="text-lg font-medium uppercase tracking-widest mb-4">Tasfashione Atelier</h3>
+                <div className="mb-6">
+                    <Image 
+                        src="/MOEMA-Logo.png" 
+                        alt="MOEMA" 
+                        width={140} 
+                        height={40} 
+                        className="w-36 h-auto object-contain brightness-0 invert"
+                    />
+                </div>
                 <p className="text-gray-400 text-sm leading-relaxed mb-6">
                     Dedicated to the art of modern leather craftsmanship. 
                     Each piece is a testament to timeless elegance and functional luxury, 
                     designed for the contemporary woman.
                 </p>
                 <div className="flex gap-4">
-                    <Link href="#" className="hover:text-gray-300 transition-colors"><Instagram className="w-5 h-5" /></Link>
-                    <Link href="#" className="hover:text-gray-300 transition-colors"><Facebook className="w-5 h-5" /></Link>
-                    <Link href="#" className="hover:text-gray-300 transition-colors"><Youtube className="w-5 h-5" /></Link>
-                    <Link href="#" className="hover:text-gray-300 transition-colors"><Twitter className="w-5 h-5" /></Link>
+                    <Link href="#" className="hover:text-[#89801D] transition-colors"><Instagram className="w-5 h-5" /></Link>
+                    <Link href="#" className="hover:text-[#89801D] transition-colors"><Facebook className="w-5 h-5" /></Link>
+                    <Link href="#" className="hover:text-[#89801D] transition-colors"><Youtube className="w-5 h-5" /></Link>
+                    <Link href="#" className="hover:text-[#89801D] transition-colors"><Twitter className="w-5 h-5" /></Link>
                 </div>
             </div>
 
@@ -32,10 +41,10 @@ export default function Footer() {
                 <form className="flex gap-2 border-b border-gray-600 pb-2">
                     <input 
                         type="email" 
-                        placeholder="Enter your email address" 
-                        className="bg-transparent w-full outline-none text-sm placeholder:text-gray-500 uppercase tracking-wide"
+                        placeholder="ENTER YOUR EMAIL ADDRESS" 
+                        className="bg-transparent w-full outline-none text-sm placeholder:text-gray-500 uppercase tracking-wide text-white"
                     />
-                    <button type="submit" className="text-xs font-bold uppercase tracking-widest hover:text-gray-300">
+                    <button type="submit" className="text-xs font-bold uppercase tracking-widest hover:text-[#89801D] transition-colors">
                         Subscribe
                     </button>
                 </form>
@@ -94,7 +103,7 @@ export default function Footer() {
 
         {/* Bottom Section: Copyright */}
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-800 text-xs text-gray-500 uppercase tracking-wider">
-           <p>&copy; {new Date().getFullYear()} Tasfashione. All Rights Reserved.</p>
+           <p>&copy; {new Date().getFullYear()} MOEMA. All Rights Reserved.</p>
            <div className="flex gap-4 mt-4 md:mt-0">
               <span>Indonesia (IDR)</span>
               <span>English</span>

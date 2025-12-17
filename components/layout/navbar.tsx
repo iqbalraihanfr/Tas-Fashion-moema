@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Search, ShoppingBag, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/cart-context";
@@ -31,7 +32,7 @@ export default function Navbar() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
               <SheetHeader className="p-6 border-b border-border text-left">
-                <SheetTitle className="text-xl font-bold tracking-[0.15em] uppercase">Tasfashione</SheetTitle>
+                <SheetTitle className="text-xl font-bold tracking-[0.15em] uppercase">MOEMA</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col py-4">
                 {navItems.map((item) => (
@@ -70,7 +71,14 @@ export default function Navbar() {
 
         {/* Logo (Center) */}
         <Link href="/" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <span className="font-bold text-2xl tracking-[0.15em] uppercase">TASFASHIONE</span>
+          <Image 
+            src="/MOEMA-Logo.png" 
+            alt="MOEMA" 
+            width={140} 
+            height={40} 
+            className="h-10 w-auto object-contain"
+            priority
+          />
         </Link>
 
         {/* User Actions (Right) */}

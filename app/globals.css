@@ -3,20 +3,26 @@
 @import "tailwindcss";
 
 @theme {
-  /* Luxury Colors */
-  --color-background: #ffffff;
-  --color-foreground: #1a1a1a;
+  /* MOEMA Luxury Palette */
+  --color-background: #FFFFFF;
+  --color-foreground: #111111;
   
-  --color-primary: #1a1a1a; /* Black/Dark Gray */
-  --color-primary-foreground: #ffffff;
+  --color-primary: #111111; /* Deep Black */
+  --color-primary-foreground: #FFFFFF;
   
-  --color-muted: #f5f5f5;
-  --color-muted-foreground: #737373;
+  /* Light Olive - Used for surfaces, secondary backgrounds, borders */
+  --color-muted: #CFCCA7;
+  --color-muted-foreground: #111111;
   
-  --color-accent: #f0ebe6; /* Warm Beige */
-  --color-accent-foreground: #1a1a1a;
+  /* Light Olive - Used for hover backgrounds */
+  --color-accent: #CFCCA7; 
+  --color-accent-foreground: #111111;
 
-  --color-border: #e5e5e5;
+  --color-border: #CFCCA7;
+  
+  /* Custom Brand Colors */
+  --color-moema-light: #CFCCA7;
+  --color-moema-dark: #89801D;
   
   /* Brand Fonts */
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -45,6 +51,18 @@
   margin-inline: auto;
   padding-inline: 1.5rem;
   max-width: 1280px;
+}
+
+@utility text-moema-dark {
+  color: var(--color-moema-dark);
+}
+
+@utility bg-moema-light {
+  background-color: var(--color-moema-light);
+}
+
+@utility bg-moema-dark {
+  background-color: var(--color-moema-dark);
 }
 
 @utility font-pedro-sans {

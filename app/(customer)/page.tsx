@@ -7,19 +7,19 @@ export default function Home() {
   return (
     <div className="space-y-20 pb-20">
       {/* HERO SECTION */}
-      <section className="relative w-full h-[85vh] bg-[#f0ebe6] overflow-hidden">
+      <section className="relative w-full h-[85vh] bg-[#CFCCA7] overflow-hidden">
         <div className="absolute inset-0 flex flex-col md:flex-row">
            {/* Left: Text Content */}
            <div className="flex-1 flex flex-col justify-center px-8 md:px-20 z-10">
-              <span className="text-xs font-bold tracking-[0.3em] uppercase mb-4 text-muted-foreground">Spring Summer 2025</span>
-              <h1 className="text-5xl md:text-7xl font-light tracking-tight uppercase mb-6 leading-[0.9]">
+              <span className="text-xs font-bold tracking-[0.3em] uppercase mb-4 text-white/80 mix-blend-difference">Spring Summer 2025</span>
+              <h1 className="text-5xl md:text-7xl font-light tracking-tight uppercase mb-6 leading-[0.9] text-black">
                 Modern <br/><span className="font-serif italic lowercase text-6xl md:text-8xl">Sculpture</span>
               </h1>
-              <p className="max-w-md text-sm text-muted-foreground mb-8 leading-relaxed">
+              <p className="max-w-md text-sm text-black/80 mb-8 leading-relaxed font-medium">
                 Explore the new collection defining the silhouette of the season. Minimalist forms meet maximalist function.
               </p>
               <div>
-                <Button size="lg" className="rounded-none px-10 uppercase tracking-widest text-xs h-12" asChild>
+                <Button size="lg" className="rounded-none px-10 uppercase tracking-widest text-xs h-12 bg-black text-white hover:bg-black/80" asChild>
                   <Link href="/catalog">Shop Collection</Link>
                 </Button>
               </div>
