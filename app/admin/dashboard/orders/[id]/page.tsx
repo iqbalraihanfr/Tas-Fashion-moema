@@ -21,17 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { updateOrderStatus } from "@/lib/admin-actions";
-import { useFormStatus } from "react-dom";
-
-// Helper component for submit button state
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? "Saving..." : "Update Status"}
-    </Button>
-  );
-}
+import { OrderSubmitButton } from "@/components/admin/order-submit-button";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -170,7 +160,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           </div>
 
           <div className="md:col-span-2">
-            <SubmitButton />
+            <OrderSubmitButton />
           </div>
         </form>
       </div>
