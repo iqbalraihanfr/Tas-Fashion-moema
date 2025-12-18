@@ -27,7 +27,9 @@
   /* Brand Fonts */
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-
+  
+  --font-teachers: var(--font-teachers), system-ui, sans-serif;
+  
   /* PEDRO */
   --font-pedro-sans: "proxima-nova", "Inter", "Helvetica Neue", Arial, sans-serif;
   --font-pedro-serif: var(--font-cormorant-garamond), "Cormorant Garamond", "Times New Roman", Times, serif;

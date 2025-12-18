@@ -2,8 +2,21 @@ import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ui/product-card";
 import Image from "next/image";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-export default function Home() {
+export default async function Home() {
+  const { data: newArrivals, error } = await supabase
+    .from('Product')
+    .select('id, name, slug, price, images')
+    .order('createdAt', { ascending: false })
+    .limit(8);
+
+  if (error) {
+    console.error("Error fetching new arrivals:", error);
+  }
+
+  const products = newArrivals || [];
+
   return (
     <div className="space-y-20 pb-20">
       {/* HERO SECTION */}
@@ -83,7 +96,7 @@ export default function Home() {
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-10">
-          {dummyProducts.map((product) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -117,62 +130,3 @@ export default function Home() {
     </div>
   );
 }
-
-const dummyProducts = [
-  {
-    id: "prod1",
-    name: "Gabine Saddle Bag",
-    slug: "gabine-saddle-bag",
-    price: 1299000,
-    images: ["/bag-1.jpg"],
-  },
-  {
-    id: "prod2",
-    name: "Cesile Boxy Shoulder",
-    slug: "cesile-boxy-shoulder",
-    price: 1099000,
-    images: ["/bag-2.jpg"],
-  },
-  {
-    id: "prod3",
-    name: "Koa Square Push-Lock",
-    slug: "koa-square-push-lock",
-    price: 1199000,
-    images: ["/bag-3.jpg"],
-  },
-  {
-    id: "prod4",
-    name: "Perline Beaded Handle",
-    slug: "perline-beaded-handle",
-    price: 999000,
-    images: ["/bag-4.jpg"],
-  },
-  {
-    id: "prod5",
-    name: "Aubrielle Buckle Bag",
-    slug: "aubrielle-buckle-bag",
-    price: 1399000,
-    images: ["/bag-5.jpg"],
-  },
-  {
-    id: "prod6",
-    name: "Daylla Tote Bag",
-    slug: "daylla-tote-bag",
-    price: 1599000,
-    images: ["/bag-6.jpg"],
-  },
-  {
-    id: "prod7",
-    name: "Mini Gabine Saddle",
-    slug: "mini-gabine-saddle",
-    price: 899000,
-    images: ["/bag-7.jpg"],
-  },
-  {
-    id: "prod8",
-    name: "Chain Strap Evening",
-    slug: "chain-strap-evening",
-    price: 1499000,
-    images: ["/bag-8.jpg"],
-  },
-];

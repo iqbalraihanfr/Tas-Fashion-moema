@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/navbar";
-import Footer from "@/components/layout/footer";
-import { CartProvider } from "@/context/cart-context";
-import CartSheet from "@/components/layout/cart-sheet";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,8 +19,8 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Tasfashione - Premium Branded Bags",
-  description: "Discover luxury branded bags with Tasfashione.",
+  title: "MOEMA - Modern Leather Atelier",
+  description: "Discover luxury branded bags and modern sculpture with MOEMA.",
 };
 
 export default function RootLayout({
@@ -35,14 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} antialiased`}>
-        <CartProvider>
-          <Navbar />
-          <CartSheet />
-          <main className="min-h-screen bg-background">
-            {children}
-          </main>
-          <Footer />
-        </CartProvider>
+        {children}
       </body>
     </html>
   );
