@@ -1,7 +1,6 @@
 "use server";
 
 import { CartItem } from "@/context/cart-context";
-import { redirect } from "next/navigation";
 import { signIn, signOut } from "../auth";
 import { AuthError } from "next-auth";
 import { supabaseAdmin } from '@/lib/supabase'; // Import supabaseAdmin client
@@ -43,7 +42,7 @@ export async function createOrder(formData: FormData, cartItems: CartItem[]) {
   const total = subtotal + shippingFee;
 
   if (!customerName || !customerEmail || !customerPhone || !address || !city || !postalCode) {
-    throw new Error("Missing required customer information.");
+    return { success: false, error: "Missing required customer information." };
   }
 
   try {
@@ -66,11 +65,11 @@ export async function createOrder(formData: FormData, cartItems: CartItem[]) {
 
     if (orderError) {
       console.error("Supabase Order Creation Error:", orderError);
-      throw new Error("Failed to create order in database.");
+      return { success: false, error: "Failed to create order in database." };
     }
 
     if (!orderData?.id) {
-      throw new Error("Order ID not returned after creation.");
+      return { success: false, error: "Order ID not returned after creation." };
     }
 
     // 2. Create Order Items
@@ -87,7 +86,7 @@ export async function createOrder(formData: FormData, cartItems: CartItem[]) {
 
     if (orderItemError) {
       console.error("Supabase OrderItem Creation Error:", orderItemError);
-      throw new Error("Failed to create order items in database.");
+      return { success: false, error: "Failed to create order items in database." };
     }
 
     // Construct WhatsApp message
@@ -108,14 +107,10 @@ export async function createOrder(formData: FormData, cartItems: CartItem[]) {
     const encodedMessage = encodeURIComponent(whatsappMessage);
     const whatsappUrl = `https://wa.me/+628123456789?text=${encodedMessage}`; // Replace with actual WA number
 
-    // Redirect to WhatsApp
-    redirect(whatsappUrl);
+    return { success: true, url: whatsappUrl };
 
   } catch (error) {
     console.error("Failed to create order:", error);
-    if (error instanceof Error) {
-        throw error; // Re-throw custom errors
-    }
-    throw new Error("Failed to place order. Please try again.");
+    return { success: false, error: "Failed to place order. Please try again." };
   }
 }

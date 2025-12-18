@@ -5,31 +5,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import Image from "next/image";
-import { useCart } from "@/context/cart-context"; // Import useCart
-import { createOrder } from "@/lib/actions"; // Import Server Action
-import { useFormStatus } from "react-dom"; // For pending state
-
-// Sub-component for submit button to use useFormStatus
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button
-      size="lg"
-      className="w-full h-14 uppercase tracking-widest text-xs rounded-none"
-      type="submit"
-      disabled={pending}
-    >
-      {pending ? "Processing..." : "Order via WhatsApp"}
-    </Button>
-  );
-}
+import { useCart } from "@/context/cart-context";
+import { createOrder } from "@/lib/actions";
+import { useState } from "react";
 
 export default function CheckoutPage() {
-  const { items: cartItems, subtotal, removeItem } = useCart(); // Add removeItem for potential clear cart after order
-  
-  // Bind cartItems to the server action
-  const createOrderWithCart = createOrder.bind(null, cartItems);
+  const { items: cartItems, subtotal, clearCart } = useCart();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await createOrder(formData, cartItems);
+
+    if (result.success && result.url) {
+      clearCart();
+      window.location.href = result.url;
+    } else {
+      alert(result.error || "Failed to place order.");
+      setIsSubmitting(false);
+    }
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -62,7 +60,7 @@ export default function CheckoutPage() {
         <div className="container max-w-6xl grid lg:grid-cols-2 gap-0 lg:min-h-[calc(100vh-60px)]">
             {/* LEFT: Form Section */}
             <div className="py-10 lg:pr-16 lg:border-r border-border">
-                <form className="max-w-lg mx-auto lg:mx-0 space-y-10" action={createOrderWithCart}>
+                <form className="max-w-lg mx-auto lg:mx-0 space-y-10" onSubmit={handleSubmit}>
                     
                     {/* Contact */}
                     <section>
@@ -123,7 +121,14 @@ export default function CheckoutPage() {
                          </div>
                     </section>
 
-                    <SubmitButton />
+                    <Button
+                      size="lg"
+                      className="w-full h-14 uppercase tracking-widest text-xs rounded-none"
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Processing..." : "Order via WhatsApp"}
+                    </Button>
                 </form>
             </div>
 
