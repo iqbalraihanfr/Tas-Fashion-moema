@@ -202,7 +202,13 @@ export async function updateProduct(formData: FormData) {
   redirect('/admin/dashboard/products');
 }
 
-export async function deleteProduct(id: string) {
+export async function deleteProduct(prevState: any, formData: FormData) {
+  const id = formData.get("productId") as string;
+
+  if (!id) {
+    return { error: "Product ID is missing." };
+  }
+
   // First, get product data to delete associated images
   const { data: product, error: fetchError } = await supabaseAdmin
     .from('Product')
@@ -212,7 +218,7 @@ export async function deleteProduct(id: string) {
 
   if (fetchError || !product) {
     console.error("Error fetching product for deletion:", fetchError);
-    throw new Error("Product not found for deletion.");
+    return { error: "Product not found for deletion." };
   }
 
   // Delete images from storage
@@ -226,13 +232,13 @@ export async function deleteProduct(id: string) {
 
   if (error) {
     console.error("Supabase delete product error:", error);
-    throw new Error("Failed to delete product.");
+    return { error: "Failed to delete product." };
   }
 
   revalidatePath('/admin/dashboard/products');
   revalidatePath('/catalog');
   revalidatePath('/');
-  // No redirect needed, stay on product list page
+  return { success: true };
 }
 
 export async function updateOrderStatus(formData: FormData) {
