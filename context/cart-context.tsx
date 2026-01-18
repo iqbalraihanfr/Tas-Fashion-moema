@@ -33,6 +33,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Hydration fix (load from local storage if needed, but keep simple for now)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
     const savedCart = localStorage.getItem("cart");
     if (savedCart) {

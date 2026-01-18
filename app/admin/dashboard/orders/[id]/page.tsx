@@ -51,7 +51,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   }
 
   // Cast types for clarity
-  const typedOrder: Order & { OrderItem: (OrderItem & { Product: Product })[] } = order as any;
+  const typedOrder = order as unknown as Order & { OrderItem: (OrderItem & { Product: Product })[] };
 
   return (
     <div className="space-y-8">

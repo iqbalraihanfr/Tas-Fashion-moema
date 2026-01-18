@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ArrowRight } from "lucide-react";
+import { Minus, Plus, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -45,7 +45,7 @@ export default function CartPage() {
     return (
       <div className="container py-20 text-center">
         <h1 className="text-2xl font-medium uppercase tracking-wide mb-4">Your Bag is Empty</h1>
-        <p className="text-muted-foreground mb-8">Looks like you haven't made your choice yet.</p>
+        <p className="text-muted-foreground mb-8">Looks like you haven&apos;t made your choice yet.</p>
         <Button asChild className="uppercase tracking-widest rounded-none">
           <Link href="/catalog">Continue Shopping</Link>
         </Button>

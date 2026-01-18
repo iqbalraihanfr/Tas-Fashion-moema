@@ -151,7 +151,7 @@ export async function updateProduct(formData: FormData) {
   }
 
   const data = parsed.data;
-  let finalImages: string[] = data.existingImages || [];
+  const finalImages: string[] = data.existingImages || [];
 
   // Fetch current product to compare images
   const { data: currentProduct, error: fetchError } = await supabaseAdmin
@@ -202,7 +202,7 @@ export async function updateProduct(formData: FormData) {
   redirect('/admin/dashboard/products');
 }
 
-export async function deleteProduct(prevState: any, formData: FormData) {
+export async function deleteProduct(prevState: unknown, formData: FormData) {
   const id = formData.get("productId") as string;
 
   if (!id) {
