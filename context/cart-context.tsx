@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { calculateSubtotal, addItemToCart } from "@/lib/cart-logic";
 
 export type CartItem = {
   id: string;
@@ -52,17 +53,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items, isMounted]);
 
   const addItem = (newItem: Omit<CartItem, "quantity">) => {
-    setItems((prev) => {
-      const existing = prev.find((item) => item.id === newItem.id && item.color === newItem.color);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === newItem.id && item.color === newItem.color
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, { ...newItem, quantity: 1 }];
-    });
+    setItems((prev) => addItemToCart(prev, newItem));
     setIsCartOpen(true); // Auto open cart drawer
   };
 
@@ -81,7 +72,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const subtotal = calculateSubtotal(items);
 
   return (
     <CartContext.Provider
