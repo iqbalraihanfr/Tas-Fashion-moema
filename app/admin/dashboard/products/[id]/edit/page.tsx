@@ -26,6 +26,10 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     price: product.price,
     stock: product.stock,
     images: product.images,
+    baseName: product.base_name || product.name, // Handle snake_case from DB if needed, or camelCase
+    sku: product.sku,
+    color: product.color,
+    dimensions: product.dimensions,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };

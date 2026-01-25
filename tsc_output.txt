@@ -1,0 +1,30 @@
+app/(customer)/catalog/page.tsx(13,64): error TS2349: This expression is not callable.
+  Type 'CacheInterface<{ category: Omit<SingleParserBuilder<string>, "parseServerSide"> & { readonly defaultValue: string; parseServerSide(value: string | string[] | undefined): string; }; sort: Omit<...> & { ...; }; search: Omit<...> & { ...; }; minPrice: SingleParserBuilder<...>; maxPrice: SingleParserBuilder<...>; }>' has no call signatures.
+app/components-showcase/page.tsx(158,23): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(322,25): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(327,25): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(332,25): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(337,25): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(338,25): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(348,25): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(349,25): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(350,25): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(352,27): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(353,27): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(363,31): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(365,33): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+app/components-showcase/page.tsx(366,33): error TS2322: Type '{ variant: string; className: string; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.

@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Cormorant_Garamond } from "next/font/google";
+import { Inter, Cormorant_Garamond } from "next/font/google";
 import QueryProvider from "@/components/providers/query-provider";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -20,7 +16,10 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "MOEMA - Modern Leather Atelier",
+  title: {
+    template: "%s | MOEMA - Modern Leather Atelier",
+    default: "MOEMA - Modern Leather Atelier",
+  },
   description: "Discover luxury branded bags and modern sculpture with MOEMA.",
 };
 
@@ -31,10 +30,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased`}>
-        <QueryProvider>
-          {children}
-        </QueryProvider>
+      <body className={`${inter.variable} ${cormorant.variable} antialiased`}>
+        <NuqsAdapter>
+          <QueryProvider>
+            {children}
+          </QueryProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );

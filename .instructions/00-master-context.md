@@ -104,7 +104,7 @@ A task is ONLY considered complete when:
 
 When I ask for a solution or feature:
 
-1. **Analyze:** Briefly check `01-product-context` and `02-system-context` for conflicts.
+1. **Analyze:** Check `01-product-context` for design rules. **CRITICAL:** Check `02-system-context` for the **Directory Structure** and **Data Schema** to ensure you are placing files in the right spot and using correct field names.
 2. **Plan:** (Internal thought) How does this fit the architecture?
 3. **Execute:** Provide the complete code implementation following conventions.
    - **CONSTRAINT:** **NO** "Here is the code" preambles. **NO** "I imported X" summaries after the code. Just the file path and the code block.

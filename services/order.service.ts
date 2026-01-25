@@ -62,7 +62,13 @@ export async function updateOrderStatus(id: string, data: {
   return await orderRepo.updateOrderStatus(id, data);
 }
 
-function generateWhatsAppLink(order: any, cartItems: CartItem[]) {
+interface OrderSummary {
+  id: string;
+  customerName: string;
+  total: number;
+}
+
+function generateWhatsAppLink(order: OrderSummary, cartItems: CartItem[]) {
   let message = "Halo MOEMA, saya ingin konfirmasi pesanan:\n";
   message += `Order ID: #${order.id.slice(0, 8)}\n`;
   message += `Nama: ${order.customerName}\n\n`;

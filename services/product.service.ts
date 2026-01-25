@@ -4,7 +4,11 @@ import slugify from "slugify";
 import { AppError } from "@/lib/errors";
 
 export interface CreateProductInput {
-  name: string;
+  name: string;           // Full name, e.g., "Joanna Gray"
+  baseName: string;       // Model name, e.g., "Joanna"
+  sku: string;            // Product code, e.g., "Y1886"
+  color: string;          // Color variant, e.g., "Gray"
+  dimensions: string;     // Size, e.g., "45 cm x 45 cm"
   description: string;
   price: number;
   stock: number;
@@ -26,7 +30,11 @@ export async function createProduct(input: CreateProductInput) {
   // 2. Create in DB
   return await productRepo.createProduct({
     name: input.name,
+    baseName: input.baseName,
     slug,
+    sku: input.sku,
+    color: input.color,
+    dimensions: input.dimensions,
     description: input.description,
     price: input.price,
     stock: input.stock,
@@ -59,7 +67,11 @@ export async function updateProduct(input: UpdateProductInput) {
   // 3. Update in DB
   return await productRepo.updateProduct(input.id, {
     name: input.name,
+    baseName: input.baseName,
     slug,
+    sku: input.sku,
+    color: input.color,
+    dimensions: input.dimensions,
     description: input.description,
     price: input.price,
     stock: input.stock,

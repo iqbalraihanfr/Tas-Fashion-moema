@@ -1,11 +1,15 @@
 export type Product = {
   id: string;
-  name: string;
-  slug: string;
+  name: string;           // Full name with color, e.g., "Joanna Gray"
+  baseName: string;       // Model name only, e.g., "Joanna"
+  slug: string;           // URL-friendly, e.g., "joanna-gray"
+  sku: string;            // Product code, e.g., "Y1886"
+  color: string;          // Color variant, e.g., "Gray", "Pine Brown"
+  dimensions: string;     // Size info, e.g., "45 cm x 45 cm"
   description: string;
-  price: number;
+  price: number;          // Price in IDR (integer, no decimals)
   stock: number;
-  images: string[];
+  images: string[];       // Array of Supabase Storage URLs
   createdAt: string;
   updatedAt: string;
 };

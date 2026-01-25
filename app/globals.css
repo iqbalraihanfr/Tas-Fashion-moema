@@ -25,8 +25,8 @@
   --color-moema-dark: #89801D;
   
   /* Brand Fonts */
-  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: var(--font-cormorant-garamond), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   
   --font-teachers: var(--font-teachers), system-ui, sans-serif;
   

@@ -11,6 +11,10 @@ import { AppError } from "@/lib/errors";
 const productSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Product name is required"),
+  baseName: z.string().min(1, "Base name (Model) is required"),
+  sku: z.string().min(1, "SKU/Code is required"),
+  color: z.string().min(1, "Color is required"),
+  dimensions: z.string().min(1, "Dimensions are required"),
   slug: z.string().optional(),
   description: z.string().min(1, "Description is required"),
   price: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().positive("Price must be positive")),
@@ -29,6 +33,10 @@ const orderStatusSchema = z.object({
 
 export async function createProduct(formData: FormData) {
   const name = formData.get("name") as string;
+  const baseName = formData.get("baseName") as string;
+  const sku = formData.get("sku") as string;
+  const color = formData.get("color") as string;
+  const dimensions = formData.get("dimensions") as string;
   const description = formData.get("description") as string;
   const price = formData.get("price") as string;
   const stock = formData.get("stock") as string;
@@ -37,6 +45,10 @@ export async function createProduct(formData: FormData) {
 
   const parsed = productSchema.safeParse({
     name,
+    baseName,
+    sku,
+    color,
+    dimensions,
     slug: customSlug || undefined,
     description,
     price,
@@ -51,6 +63,10 @@ export async function createProduct(formData: FormData) {
   try {
     await productService.createProduct({
       name: parsed.data.name,
+      baseName: parsed.data.baseName,
+      sku: parsed.data.sku,
+      color: parsed.data.color,
+      dimensions: parsed.data.dimensions,
       description: parsed.data.description,
       price: parsed.data.price,
       stock: parsed.data.stock,
@@ -71,6 +87,10 @@ export async function createProduct(formData: FormData) {
 export async function updateProduct(formData: FormData) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
+  const baseName = formData.get("baseName") as string;
+  const sku = formData.get("sku") as string;
+  const color = formData.get("color") as string;
+  const dimensions = formData.get("dimensions") as string;
   const description = formData.get("description") as string;
   const price = formData.get("price") as string;
   const stock = formData.get("stock") as string;
@@ -83,6 +103,10 @@ export async function updateProduct(formData: FormData) {
   const parsed = productSchema.safeParse({
     id,
     name,
+    baseName,
+    sku,
+    color,
+    dimensions,
     slug: customSlug || undefined,
     description,
     price,
@@ -99,6 +123,10 @@ export async function updateProduct(formData: FormData) {
     await productService.updateProduct({
       id: parsed.data.id!,
       name: parsed.data.name,
+      baseName: parsed.data.baseName,
+      sku: parsed.data.sku,
+      color: parsed.data.color,
+      dimensions: parsed.data.dimensions,
       description: parsed.data.description,
       price: parsed.data.price,
       stock: parsed.data.stock,

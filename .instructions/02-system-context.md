@@ -4,10 +4,60 @@
 
 **System Type:** Premium E-commerce Platform (Next.js 16 + Supabase)
 
+## 2. STRICT DIRECTORY STRUCTURE (THE MAP)
+
+**AI INSTRUCTION:** Follow this structure exactly. Do not invent new top-level folders.
+
+```
+/
+├── app/
+│   ├── (public)/               # Public marketing pages (Layout group)
+│   ├── (shop)/                 # E-commerce flow (Shop, Product, Cart)
+│   ├── (auth)/                 # Login/Register pages
+│   ├── admin/                  # Protected Admin Dashboard
+│   ├── api/                    # Route Handlers (Webhooks, etc)
+│   ├── global.css              # Tailwind v4 Imports & Theme
+│   └── layout.tsx              # Root Layout (Providers)
+├── components/
+│   ├── ui/                     # SHADCN & Base Atoms (Buttons, Inputs)
+│   ├── layout/                 # Headers, Footers, Sidebars
+│   ├── features/               # Smart Components (ProductCard, CartDrawer) - CONNECTED to logic
+│   └── shared/                 # Pure dumb components (PageHeader, Section) - DISCONNECTED from logic
+├── lib/
+│   ├── utils.ts                # cn() and basic formatters
+│   ├── constants.ts            # Config constants
+│   └── hooks/                  # Global hooks (use-media-query, etc)
+├── services/                   # BUSINESS LOGIC LAYER (See below)
+│   ├── auth/                   # Auth Service
+│   ├── products/               # Product Service (Fetching, stock checks)
+│   ├── orders/                 # Order mechanics
+│   └── whatsapp/               # WhatsApp formatting logic
+├── types/                      # Global TypeScript Definitions
+│   └── database.types.ts       # Supabase Generated Types
+└── supabase/                   # Migrations & Config
+```
+
+## 3. CORE DATA MODELS (The Source of Truth)
+
+**AI INSTRUCTION:** Use these field names. Do not hallucinate "firstName" if we use "full_name".
+
+1.  **`users` (profiles):**
+    - `id` (uuid, PK), `email`, `full_name`, `avatar_url`, `role` ('admin' | 'customer').
+2.  **`products`:**
+    - `id`, `slug` (unique), `name`, `description`, `price` (int), `sale_price` (nullable), `stock` (int), `images` (text[]), `category_id`, `is_active`.
+3.  **`categories`:**
+    - `id`, `name`, `slug`, `image_url`.
+4.  **`orders`:**
+    - `id` (uuid), `user_id` (nullable for guest), `status` ('pending_inquiry', 'confirmed', 'shipped'), `total_amount`, `whatsapp_link`, `snap_token` (future).
+5.  **`order_items`:**
+    - `id`, `order_id`, `product_id`, `quantity`, `price_at_time`.
+
+---
+
 **CORE PHILOSOPHY: HYBRID RENDERING & PERFORMANCE**
 We leverage Next.js App Router to its fullest: **Server Components** for initial load & SEO, **Client Components** for interactivity.
 
-1.  **SEO First:** All Product Listing Pages (PLBP) and Product Detail Pages (PDP) must be Server Rendered.
+1.  **SEO First:** All Product Listing Pages (PLZP) and Product Detail Pages (PDP) must be Server Rendered.
 2.  **Interactive Islands:** Complex UI (Cart, Filter Bar, Checkout) are Client Components.
 
 **DATA FLOW:**

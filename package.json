@@ -9,11 +9,12 @@
     "lint": "eslint",
     "check-types": "tsc --noEmit",
     "check-all": "pnpm lint && pnpm check-types && pnpm test run",
-    "test": "vitest",
-    "prisma:generate": "dotenv -e .env.local -- prisma generate",
+    "test": "dotenv -e .env -- vitest",
+    "prisma:generate": "dotenv -e .env -- prisma generate",
     "prisma:migrate": "dotenv -e .env.migrate -- prisma migrate dev",
     "prisma:deploy": "dotenv -e .env.migrate -- prisma migrate deploy",
     "prisma:studio": "dotenv -e .env.migrate -- prisma studio",
+    "seed:products": "dotenv -e .env -- tsx scripts/seed-products.ts",
     "prepare": "husky"
   },
   "dependencies": {

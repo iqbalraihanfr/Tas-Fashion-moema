@@ -26,7 +26,8 @@ describe('Order Service Integration Tests', () => {
     price: 1000000,
     quantity: 1,
     image: '/img.jpg',
-    color: 'Black'
+    color: 'Black',
+    slug: 'luxury-tote'
   };
 
   beforeEach(() => {
@@ -53,6 +54,10 @@ describe('Order Service Integration Tests', () => {
     vi.mocked(productRepo.getProductById).mockResolvedValue({
       id: 'prod-1',
       name: 'Luxury Tote',
+      baseName: 'Luxury Tote',
+      sku: 'LT-001',
+      color: 'Black',
+      dimensions: '30x40cm',
       stock: 0,
       price: 1000000,
       slug: 'luxury-tote',
@@ -72,6 +77,10 @@ describe('Order Service Integration Tests', () => {
     vi.mocked(productRepo.getProductById).mockResolvedValue({
       id: 'prod-1',
       name: 'Luxury Tote',
+      baseName: 'Luxury Tote',
+      sku: 'LT-001',
+      color: 'Black',
+      dimensions: '30x40cm',
       stock: 10,
       price: 1000000,
       slug: 'luxury-tote',
