@@ -20,7 +20,7 @@ export type Order = {
   shippingFee: number;
   total: number;
   paymentStatus: 'pending' | 'paid' | 'failed';
-  shippingStatus: 'idle' | 'processing' | 'shipped';
+  shippingStatus: 'idle' | 'processing' | 'shipped' | 'delivered';
   trackingNumber: string | null;
   createdAt: string;
 };

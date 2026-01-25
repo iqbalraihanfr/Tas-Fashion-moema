@@ -1,49 +1,27 @@
 import ProductCard from "@/components/ui/product-card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { Filter as FilterIcon, X } from "lucide-react";
+import { Filter as FilterIcon } from "lucide-react";
+import { getAllProducts, ProductFilter } from "@/services/database/product.repository";
 
 export default async function CatalogPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const { category, sort, search, minPrice, maxPrice } = searchParams;
+  const resolvedParams = await searchParams;
+  const { category, sort, search, minPrice, maxPrice } = resolvedParams;
 
-  let query = supabase.from('Product').select('*');
+  const filter: ProductFilter = {
+    search: typeof search === 'string' ? search : undefined,
+    category: typeof category === 'string' ? category : undefined,
+    minPrice: minPrice ? parseInt(minPrice as string) : undefined,
+    maxPrice: maxPrice ? parseInt(maxPrice as string) : undefined,
+    sort: (sort === 'price_asc' || sort === 'price_desc' || sort === 'newest') ? sort : undefined,
+  };
 
-  // Search filtering
-  if (search && typeof search === 'string') {
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
-  }
-
-  // Category filtering
-  if (category && typeof category === 'string') {
-    query = query.or(`name.ilike.%${category}%,description.ilike.%${category}%`);
-  }
-
-  // Price filtering
-  if (minPrice) query = query.gte('price', parseInt(minPrice as string));
-  if (maxPrice) query = query.lte('price', parseInt(maxPrice as string));
-
-  // Sorting
-  if (sort === 'price_asc') {
-    query = query.order('price', { ascending: true });
-  } else if (sort === 'price_desc') {
-    query = query.order('price', { ascending: false });
-  } else {
-    query = query.order('createdAt', { ascending: false });
-  }
-
-  const { data: products, error } = await query;
-
-  if (error) {
-    console.error("Error fetching catalog:", error);
-  }
-
-  const productList = products || [];
+  const products = await getAllProducts(filter);
 
   const priceRanges = [
     { label: "Under Rp 1.000.000", min: 0, max: 1000000 },
@@ -111,7 +89,7 @@ export default async function CatalogPage({
                 <div>
                     <h1 className="text-xl font-medium uppercase tracking-wide">
                         {search ? `Search results for: "${search}"` : category ? `${category} Collections` : 'All Products'}
-                        <span className="text-muted-foreground text-sm ml-2">({productList.length})</span>
+                        <span className="text-muted-foreground text-sm ml-2">({products.length})</span>
                     </h1>
                 </div>
                 
@@ -135,7 +113,7 @@ export default async function CatalogPage({
                 </div>
              </div>
 
-             {productList.length === 0 ? (
+             {products.length === 0 ? (
                 <div className="text-center py-20 border border-dashed rounded-md">
                     <p className="text-muted-foreground mb-4">No products found for the selected criteria.</p>
                     <Button variant="outline" asChild className="uppercase tracking-widest text-[10px] rounded-none">
@@ -144,7 +122,7 @@ export default async function CatalogPage({
                 </div>
              ) : (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10">
-                    {productList.map(product => (
+                    {products.map(product => (
                     <ProductCard key={product.id} product={product} />
                     ))}
                 </div>
@@ -169,3 +147,4 @@ export default async function CatalogPage({
     </div>
   );
 }
+

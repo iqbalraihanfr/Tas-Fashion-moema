@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased`}>
         <QueryProvider>
           {children}
         </QueryProvider>

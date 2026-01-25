@@ -9,16 +9,11 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { supabaseAdmin } from "@/lib/supabase"; // Using admin client for products to bypass RLS in admin context
-import { DeleteProductButton } from "@/components/admin/delete-product-button"; // Import the delete button
+import { DeleteProductButton } from "@/components/admin/delete-product-button";
+import { getAdminProducts } from "@/services/database/product.repository";
 
 export default async function AdminProductsPage() {
-  const { data: products, error } = await supabaseAdmin.from('Product').select('*').order('createdAt', { ascending: false });
-
-  if (error) {
-    console.error("Error fetching products:", error);
-    return <div>Error loading products.</div>;
-  }
+  const products = await getAdminProducts();
 
   return (
     <div>

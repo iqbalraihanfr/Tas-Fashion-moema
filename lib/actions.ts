@@ -3,7 +3,9 @@
 import { CartItem } from "@/context/cart-context";
 import { signIn, signOut } from "../auth";
 import { AuthError } from "next-auth";
-import { supabaseAdmin } from '@/lib/supabase'; // Import supabaseAdmin client
+import * as orderService from "@/services/order.service";
+import { checkoutSchema } from "@/lib/validations/order";
+import { AppError } from "@/lib/errors";
 
 export async function authenticate(
   prevState: string | undefined,
@@ -29,88 +31,38 @@ export async function handleSignOut() {
 }
 
 export async function createOrder(formData: FormData, cartItems: CartItem[]) {
-  const customerName = formData.get("firstName") + " " + formData.get("lastName");
-  const customerEmail = formData.get("email") as string;
-  const customerPhone = formData.get("phone") as string;
-  const address = formData.get("address") as string;
-  const postalCode = formData.get("postalCode") as string;
-  const city = formData.get("city") as string;
+  const rawData = {
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+    city: formData.get("city"),
+    postalCode: formData.get("postalCode"),
+  };
 
-  // Calculate subtotal, shippingFee, total (dummy for now)
-  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const shippingFee = 0; // Free shipping for now
-  const total = subtotal + shippingFee;
-
-  if (!customerName || !customerEmail || !customerPhone || !address || !city || !postalCode) {
-    return { success: false, error: "Missing required customer information." };
+  // 1. Validate Input with Zod
+  const validated = checkoutSchema.safeParse(rawData);
+  if (!validated.success) {
+    return { 
+      success: false, 
+      error: validated.error.issues[0].message || "Invalid input data." 
+    };
   }
 
   try {
-    // 1. Create the Order
-    const { data: orderData, error: orderError } = await supabaseAdmin
-      .from('Order') // Ensure table name matches exactly
-      .insert({
-        customerName,
-        customerEmail,
-        customerPhone,
-        address: `${address}, ${city}, ${postalCode}`,
-        subtotal,
-        shippingFee,
-        total,
-        paymentStatus: "pending",
-        shippingStatus: "idle",
-      })
-      .select('id') // Select the ID to use for order items
-      .single();
-
-    if (orderError) {
-      console.error("Supabase Order Creation Error:", orderError);
-      return { success: false, error: "Failed to create order in database." };
-    }
-
-    if (!orderData?.id) {
-      return { success: false, error: "Order ID not returned after creation." };
-    }
-
-    // 2. Create Order Items
-    const orderItemsToInsert = cartItems.map(item => ({
-      orderId: orderData.id,
-      productId: item.id,
-      quantity: item.quantity,
-      price: item.price,
-    }));
-
-    const { error: orderItemError } = await supabaseAdmin
-      .from('OrderItem') // Ensure table name matches exactly
-      .insert(orderItemsToInsert);
-
-    if (orderItemError) {
-      console.error("Supabase OrderItem Creation Error:", orderItemError);
-      return { success: false, error: "Failed to create order items in database." };
-    }
-
-    // Construct WhatsApp message
-    let whatsappMessage = `Halo MOEMA, saya ingin memesan produk berikut:\n\n`;
-    cartItems.forEach(item => {
-      whatsappMessage += `- ${item.name} (${item.color}) x ${item.quantity} = Rp ${(item.price * item.quantity).toLocaleString("id-ID")}\n`;
-    });
-    whatsappMessage += `\nSubtotal: Rp ${subtotal.toLocaleString("id-ID")}`;
-    whatsappMessage += `\nOngkir: Rp ${shippingFee.toLocaleString("id-ID")} (Gratis)`;
-    whatsappMessage += `\nTotal: Rp ${total.toLocaleString("id-ID")}`;
-    whatsappMessage += `\n\nNama: ${customerName}`;
-    whatsappMessage += `\nEmail: ${customerEmail}`;
-    whatsappMessage += `\nTelepon: ${customerPhone}`;
-    whatsappMessage += `\nAlamat: ${address}, ${city}, ${postalCode}`;
-    whatsappMessage += `\n\nNomor Pesanan Anda: ${orderData.id}\n`;
-    whatsappMessage += `Mohon konfirmasi pesanan ini. Terima kasih.`;
-
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-    const whatsappUrl = `https://wa.me/+628123456789?text=${encodedMessage}`; // Replace with actual WA number
+    // 2. Delegate to Service Layer
+    const { whatsappUrl } = await orderService.placeOrder(validated.data, cartItems);
 
     return { success: true, url: whatsappUrl };
 
   } catch (error) {
-    console.error("Failed to create order:", error);
+    console.error("Action Error [createOrder]:", error);
+    
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+    
     return { success: false, error: "Failed to place order. Please try again." };
   }
 }
