@@ -18,6 +18,7 @@ const MOCK_COLORS = [
 
 export function ProductDetailClient({ product }: { product: Product }) {
   const [selectedColor, setSelectedColor] = useState(MOCK_COLORS[0]);
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const { addItem } = useCart();
 
   const handleAddToBag = () => {
@@ -36,18 +37,34 @@ export function ProductDetailClient({ product }: { product: Product }) {
   return (
     <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
         {/* Left: Image Gallery */}
-        <div className="flex-1 lg:w-[60%]">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex-1 lg:w-[60%] flex flex-col md:flex-row gap-4 h-fit">
+           {/* Thumbnails */}
+           <div className="order-2 md:order-1 flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:max-h-[80vh] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink-0 md:w-24 pb-2 md:pb-0">
              {images.map((img, idx) => (
-               <div key={idx} className={`relative aspect-square bg-muted ${idx === 0 ? 'md:col-span-2 md:aspect-[4/3]' : ''}`}>
+               <button 
+                 key={idx} 
+                 onClick={() => setSelectedImageIdx(idx)}
+                 className={`relative aspect-[3/4] shrink-0 w-20 md:w-full bg-muted border transition-colors ${selectedImageIdx === idx ? 'border-primary' : 'border-transparent hover:border-gray-300'}`}
+               >
                  <Image 
                    src={img} 
-                   alt={`${product.name} view ${idx + 1}`} 
+                   alt={`${product.name} thumbnail ${idx + 1}`} 
                    fill 
-                   className="object-cover hover:scale-105 transition-transform duration-700 cursor-zoom-in" 
+                   className="object-cover" 
                  />
-               </div>
+               </button>
              ))}
+           </div>
+           
+           {/* Main Image */}
+           <div className="order-1 md:order-2 relative flex-1 bg-muted aspect-[4/5] md:aspect-auto md:h-[80vh]">
+             <Image 
+               src={images[selectedImageIdx]} 
+               alt={`${product.name} main view`} 
+               fill 
+               priority
+               className="object-cover" 
+             />
            </div>
         </div>
 
