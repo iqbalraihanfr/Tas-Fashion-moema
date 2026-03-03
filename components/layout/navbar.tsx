@@ -6,8 +6,9 @@ import { Search, ShoppingBag, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/cart-context";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useDebounce } from "@/lib/hooks/use-debounce";
 
 export default function Navbar() {
   const { cartCount, setIsCartOpen } = useCart();
@@ -16,11 +17,24 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
+  // Debounce search for auto-navigation (500ms)
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const hasSubmitted = useRef(false);
+
   const navItems = ["New Arrivals", "Totes", "Shoulder Bags", "Crossbody", "Mini Bags", "Clutches", "Backpacks", "Sale"];
+
+  // Auto-navigate on debounced search
+  useEffect(() => {
+    if (debouncedSearch.trim() && isSearchOpen && !hasSubmitted.current) {
+      router.push(`/catalog?search=${encodeURIComponent(debouncedSearch.trim())}`);
+    }
+    hasSubmitted.current = false;
+  }, [debouncedSearch, isSearchOpen, router]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      hasSubmitted.current = true;
       router.push(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
       setIsSearchOpen(false);
       setSearchQuery("");

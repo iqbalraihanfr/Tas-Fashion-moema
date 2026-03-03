@@ -1,9 +1,11 @@
 "use client";
 
-import { useQueryState } from "nuqs";
+import { useQueryState, parseAsString } from "nuqs";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { X, Filter as FilterIcon } from "lucide-react";
+import { X, Filter as FilterIcon, Search } from "lucide-react";
+import { useDebounce } from "@/lib/hooks/use-debounce";
 
 const CATEGORIES = ["Totes", "Shoulder Bags", "Crossbody", "Mini Bags", "Clutches", "Backpacks"];
 
@@ -13,17 +15,39 @@ const PRICE_RANGES = [
   { label: "Above Rp 2.500.000", min: 2500000, max: 99999999 },
 ];
 
+// Force server re-render on filter change (shallow: false)
+const filterOptions = { shallow: false } as const;
+
 export function CatalogFilters() {
-  const [category, setCategory] = useQueryState("category", { defaultValue: "" });
-  const [minPrice, setMinPrice] = useQueryState("minPrice", { defaultValue: "" });
-  const [maxPrice, setMaxPrice] = useQueryState("maxPrice", { defaultValue: "" });
-  const [search, setSearch] = useQueryState("search", { defaultValue: "" });
+  const [category, setCategory] = useQueryState("category", parseAsString.withOptions(filterOptions));
+  const [minPrice, setMinPrice] = useQueryState("minPrice", parseAsString.withOptions(filterOptions));
+  const [maxPrice, setMaxPrice] = useQueryState("maxPrice", parseAsString.withOptions(filterOptions));
+  const [search, setSearch] = useQueryState("search", parseAsString.withOptions(filterOptions));
+
+  // Local input state for immediate display + debounce for server re-render
+  const [searchInput, setSearchInput] = useState(search ?? "");
+  const debouncedSearch = useDebounce(searchInput, 500);
+
+  // Sync debounced value to URL param
+  useEffect(() => {
+    const trimmed = debouncedSearch.trim();
+    if (trimmed !== (search ?? "")) {
+      setSearch(trimmed || null);
+    }
+  }, [debouncedSearch, search, setSearch]);
+
+  // Sync URL param back to local input (e.g. when navigating)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSearchInput(search ?? "");
+  }, [search]);
 
   const clearFilters = () => {
     setCategory(null);
     setMinPrice(null);
     setMaxPrice(null);
     setSearch(null);
+    setSearchInput("");
   };
 
   const hasFilters = category || minPrice || search;
@@ -41,6 +65,29 @@ export function CatalogFilters() {
            </button>
         </div>
       )}
+
+      {/* SEARCH */}
+      <section>
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] mb-4">Search</h3>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full pl-9 pr-8 py-2.5 bg-transparent border-b border-muted text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-muted-foreground/50"
+          />
+          {searchInput && (
+            <button
+              onClick={() => { setSearchInput(""); setSearch(null); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </section>
 
       {/* CATEGORIES */}
       <section>
@@ -113,7 +160,7 @@ export function CatalogFilters() {
 }
 
 export function SortOptions() {
-    const [sort, setSort] = useQueryState("sort", { defaultValue: "newest" });
+    const [sort, setSort] = useQueryState("sort", parseAsString.withDefault("newest").withOptions(filterOptions));
 
     const options = [
         { label: "Newest", value: "newest" },

@@ -1,66 +1,32 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
-import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { getAdminProducts } from "@/services/database/product.repository";
+import { ProductsTable } from "@/components/admin/products-table";
+import { Plus } from "lucide-react";
 
 export default async function AdminProductsPage() {
   const products = await getAdminProducts();
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Products Management</h1>
-        <Button asChild>
-          <Link href="/admin/dashboard/products/new">Add New Product</Link>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">Product Management</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Manage your collection inventory
+          </p>
+        </div>
+        <Button asChild className="rounded-none h-10 px-6 text-[10px] uppercase tracking-[0.2em] font-bold">
+          <Link href="/admin/dashboard/products/new">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Link>
         </Button>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Image</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>
-                  <Image
-                    src={product.images && product.images.length > 0 ? product.images[0] : "/placeholder-bag.jpg"}
-                    alt={product.name}
-                    width={60}
-                    height={60}
-                    className="aspect-square rounded-md object-cover"
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>Rp {product.price.toLocaleString("id-ID")}</TableCell>
-                <TableCell>{product.stock}</TableCell>
-                <TableCell className="text-right">
-                  <Button variant="outline" size="sm" asChild className="mr-2">
-                    <Link href={`/admin/dashboard/products/${product.id}/edit`}>Edit</Link>
-                  </Button>
-                  <DeleteProductButton productId={product.id} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      {/* Products Table with Search & Filters */}
+      <ProductsTable products={products} />
     </div>
   );
 }

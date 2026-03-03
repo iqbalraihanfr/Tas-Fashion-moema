@@ -15,8 +15,8 @@ export default async function CatalogPage({
   const products = await getAllProducts({
     search: search || undefined,
     category: category || undefined,
-    minPrice: minPrice || undefined,
-    maxPrice: maxPrice || undefined,
+    minPrice: minPrice ?? undefined,
+    maxPrice: maxPrice ?? undefined,
     sort: (sort === 'price_asc' || sort === 'price_desc' || sort === 'newest') ? sort : undefined,
   });
 
