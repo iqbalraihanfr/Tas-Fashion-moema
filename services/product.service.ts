@@ -24,8 +24,13 @@ export interface UpdateProductInput extends Partial<CreateProductInput> {
 export async function createProduct(input: CreateProductInput) {
   const slug = input.slug || slugify(input.name, { lower: true, strict: true });
   
-  // 1. Upload Images
-  const imageUrls = await storageService.uploadProductImages(input.images);
+  // 1. Upload Images with organized folder structure
+  // Structure: products/{baseName}/{baseName}-{color}-{number}.webp
+  const imageUrls = await storageService.uploadProductImages(
+    input.images,
+    input.baseName,
+    input.color
+  );
   
   // 2. Create in DB
   return await productRepo.createProduct({
@@ -58,7 +63,17 @@ export async function updateProduct(input: UpdateProductInput) {
 
   // 2. Upload new images (if any)
   if (input.images && input.images.length > 0) {
-    const newImageUrls = await storageService.uploadProductImages(input.images);
+    // Calculate start index based on existing images count
+    const baseName = input.baseName || currentProduct.baseName;
+    const color = input.color || currentProduct.color;
+    const startIndex = finalImages.length;
+    
+    const newImageUrls = await storageService.uploadProductImages(
+      input.images,
+      baseName,
+      color,
+      startIndex
+    );
     finalImages = [...finalImages, ...newImageUrls];
   }
 

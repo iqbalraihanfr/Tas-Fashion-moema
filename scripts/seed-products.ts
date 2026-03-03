@@ -10,7 +10,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // Storage base URL for images
-const STORAGE_BASE_URL = `${SUPABASE_URL}/storage/v1/object/public/product-images/Products`;
+const STORAGE_BASE_URL = `${SUPABASE_URL}/storage/v1/object/public/product-images/products`;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 

@@ -14,18 +14,21 @@ export async function getAllProducts(filter: ProductFilter = {}): Promise<Produc
   let query = supabase.from('Product').select('*');
 
   if (filter.search) {
-    query = query.or(`name.ilike.%${filter.search}%,description.ilike.%${filter.search}%`);
+    const s = filter.search.replace(/'/g, "''"); // escape single quotes
+    query = query.or(`name.ilike.%${s}%,baseName.ilike.%${s}%,sku.ilike.%${s}%,color.ilike.%${s}%`);
   }
 
   if (filter.category) {
-    query = query.or(`name.ilike.%${filter.category}%,description.ilike.%${filter.category}%`);
+    // Categories map to baseName or color — normalize hyphens to spaces for matching
+    const cat = filter.category.replace(/-/g, ' ').replace(/'/g, "''");
+    query = query.or(`name.ilike.%${cat}%,baseName.ilike.%${cat}%,color.ilike.%${cat}%`);
   }
 
-  if (filter.minPrice !== undefined) {
+  if (filter.minPrice != null) {
     query = query.gte('price', filter.minPrice);
   }
 
-  if (filter.maxPrice !== undefined) {
+  if (filter.maxPrice != null) {
     query = query.lte('price', filter.maxPrice);
   }
 
