@@ -36,7 +36,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
   return (
     <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
-        {/* Left: Image Gallery */}
+         {/* Left: Image Gallery */}
         <div className="flex-1 lg:w-[60%] flex flex-col md:flex-row gap-4 h-fit">
            {/* Thumbnails */}
            <div className="order-2 md:order-1 flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:max-h-[80vh] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink-0 md:w-24 pb-2 md:pb-0">
@@ -44,26 +44,26 @@ export function ProductDetailClient({ product }: { product: Product }) {
                <button 
                  key={idx} 
                  onClick={() => setSelectedImageIdx(idx)}
-                 className={`relative aspect-[3/4] shrink-0 w-20 md:w-full bg-muted border transition-colors ${selectedImageIdx === idx ? 'border-primary' : 'border-transparent hover:border-gray-300'}`}
+                 className={`relative aspect-[3/4] shrink-0 w-20 md:w-full bg-secondary border transition-colors ${selectedImageIdx === idx ? 'border-primary' : 'border-transparent hover:border-gray-300'}`}
                >
                  <Image 
                    src={img} 
                    alt={`${product.name} thumbnail ${idx + 1}`} 
                    fill 
-                   className="object-cover" 
+                   className="object-contain p-1" 
                  />
                </button>
              ))}
            </div>
            
            {/* Main Image */}
-           <div className="order-1 md:order-2 relative flex-1 bg-muted aspect-[4/5] md:aspect-auto md:h-[80vh]">
+           <div className="order-1 md:order-2 relative flex-1 bg-secondary aspect-[4/5] md:aspect-auto md:h-[80vh]">
              <Image 
                src={images[selectedImageIdx]} 
                alt={`${product.name} main view`} 
                fill 
                priority
-               className="object-cover" 
+               className="object-contain" 
              />
            </div>
         </div>
