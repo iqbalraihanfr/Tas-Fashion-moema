@@ -22,6 +22,9 @@ import {
 } from "@/components/ui/table";
 import { updateOrderStatus } from "@/lib/admin-actions";
 import { OrderSubmitButton } from "@/components/admin/order-submit-button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -47,66 +50,110 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   if (orderError || !order) {
     console.error("Error fetching order:", orderError);
-    return <div>Order not found or error fetching data.</div>;
+    return <div className="text-center py-10 text-muted-foreground">Order not found or error fetching data.</div>;
   }
 
   // Cast types for clarity
   const typedOrder = order as unknown as Order & { OrderItem: (OrderItem & { Product: Product })[] };
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Order Details: {typedOrder.id}</h1>
-
-      {/* Order Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 rounded-md border p-6">
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" size="icon" asChild className="h-8 w-8 rounded-md">
+          <Link href="/admin/dashboard/orders">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
         <div>
-          <h2 className="text-lg font-semibold mb-4">Customer Information</h2>
-          <p><strong>Name:</strong> {typedOrder.customerName}</p>
-          <p><strong>Email:</strong> {typedOrder.customerEmail}</p>
-          <p><strong>Phone:</strong> {typedOrder.customerPhone}</p>
-          <p><strong>Address:</strong> {typedOrder.address}</p>
-          <p className="mt-4 text-sm text-muted-foreground">Ordered on: {format(new Date(typedOrder.createdAt), "dd MMM yyyy HH:mm")}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Order Details</h1>
+          <p className="text-sm text-muted-foreground font-mono">{typedOrder.id}</p>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-          <p><strong>Subtotal:</strong> Rp {typedOrder.subtotal.toLocaleString("id-ID")}</p>
-          <p><strong>Shipping:</strong> Rp {typedOrder.shippingFee.toLocaleString("id-ID")} (Free)</p>
-          <p><strong>Total:</strong> Rp {typedOrder.total.toLocaleString("id-ID")}</p>
-          <p className="mt-4"><strong>Payment Status:</strong> {typedOrder.paymentStatus}</p>
-          <p><strong>Shipping Status:</strong> {typedOrder.shippingStatus}</p>
-          {typedOrder.trackingNumber && <p><strong>Tracking No:</strong> {typedOrder.trackingNumber}</p>}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Order Summary */}
+        <div className="bg-background rounded-xl border shadow-sm p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Customer Information</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">Name:</span> <span className="font-medium">{typedOrder.customerName}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Email:</span> <span>{typedOrder.customerEmail}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Phone:</span> <span>{typedOrder.customerPhone}</span></div>
+            <div className="flex justify-between border-t pt-2 mt-2">
+              <span className="text-muted-foreground">Address:</span> 
+              <span className="text-right max-w-[60%]">{typedOrder.address}</span>
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground mt-4 pt-4 border-t">
+              <span>Ordered on:</span>
+              <span>{format(new Date(typedOrder.createdAt), "dd MMM yyyy HH:mm")}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-background rounded-xl border shadow-sm p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Order Summary</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal:</span> <span>Rp {typedOrder.subtotal.toLocaleString("id-ID")}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Shipping:</span> <span>Rp {typedOrder.shippingFee.toLocaleString("id-ID")} (Free)</span></div>
+            <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
+              <span>Total:</span> <span>Rp {typedOrder.total.toLocaleString("id-ID")}</span>
+            </div>
+          </div>
+          
+          <div className="space-y-3 pt-4 border-t">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Payment Status:</span>
+              <Badge variant={typedOrder.paymentStatus === "paid" ? "default" : "secondary"} className="rounded-md font-normal">
+                {typedOrder.paymentStatus}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Shipping Status:</span>
+              <Badge variant="outline" className="rounded-md font-normal">
+                {typedOrder.shippingStatus}
+              </Badge>
+            </div>
+            {typedOrder.trackingNumber && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Tracking No:</span>
+                <span className="font-mono text-xs bg-muted px-2 py-1 rounded-md">{typedOrder.trackingNumber}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Order Items */}
-      <div className="rounded-md border p-6">
-        <h2 className="text-lg font-semibold mb-4">Ordered Items</h2>
+      <div className="bg-background rounded-xl border shadow-sm overflow-hidden">
+        <div className="p-6 border-b">
+          <h2 className="text-lg font-semibold">Ordered Items</h2>
+        </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/30">
             <TableRow>
-              <TableHead className="w-[80px]">Image</TableHead>
+              <TableHead className="w-[80px] pl-6">Image</TableHead>
               <TableHead>Product</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Total</TableHead>
+              <TableHead className="text-center">Qty</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+              <TableHead className="text-right pr-6">Total</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {typedOrder.OrderItem.map((item) => (
               <TableRow key={item.id}>
-                <TableCell>
-                  <Image
-                    src={item.Product?.images[0] || "/placeholder-bag.jpg"}
-                    alt={item.Product?.name || "Product image"}
-                    width={50}
-                    height={50}
-                    className="aspect-square rounded-md object-cover"
-                  />
+                <TableCell className="pl-6">
+                  <div className="relative w-12 h-12 rounded-md bg-muted overflow-hidden border border-border/50">
+                    <Image
+                      src={item.Product?.images[0] || "/placeholder-bag.jpg"}
+                      alt={item.Product?.name || "Product image"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                 </TableCell>
                 <TableCell className="font-medium">{item.Product?.name || "N/A"}</TableCell>
-                <TableCell>{item.quantity}</TableCell>
-                <TableCell>Rp {item.price.toLocaleString("id-ID")}</TableCell>
-                <TableCell>Rp {(item.quantity * item.price).toLocaleString("id-ID")}</TableCell>
+                <TableCell className="text-center">{item.quantity}</TableCell>
+                <TableCell className="text-right">Rp {item.price.toLocaleString("id-ID")}</TableCell>
+                <TableCell className="text-right font-medium pr-6">Rp {(item.quantity * item.price).toLocaleString("id-ID")}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -114,12 +161,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       </div>
 
       {/* Update Status Form */}
-      <div className="rounded-md border p-6">
-        <h2 className="text-lg font-semibold mb-4">Update Order Status</h2>
-        <form action={updateOrderStatus} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-background rounded-xl border shadow-sm p-6">
+        <h2 className="text-lg font-semibold mb-6">Update Order Status</h2>
+        <form action={updateOrderStatus} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <input type="hidden" name="orderId" value={typedOrder.id} />
           
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="paymentStatus">Payment Status</Label>
             <Select name="paymentStatus" defaultValue={typedOrder.paymentStatus}>
               <SelectTrigger className="w-full">
@@ -133,7 +180,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             </Select>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="shippingStatus">Shipping Status</Label>
             <Select name="shippingStatus" defaultValue={typedOrder.shippingStatus}>
               <SelectTrigger className="w-full">
@@ -148,7 +195,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             </Select>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 space-y-2">
             <Label htmlFor="trackingNumber">Tracking Number</Label>
             <Input
               id="trackingNumber"
@@ -156,10 +203,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               type="text"
               defaultValue={typedOrder.trackingNumber || ""}
               placeholder="Enter tracking number"
+              className="font-mono text-sm"
             />
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 flex justify-end">
             <OrderSubmitButton />
           </div>
         </form>

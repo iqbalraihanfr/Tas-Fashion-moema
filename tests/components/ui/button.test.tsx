@@ -13,7 +13,7 @@ describe('Button Component', () => {
     render(<Button variant="destructive">Delete</Button>)
     const button = screen.getByRole('button', { name: /delete/i })
     expect(button).toHaveClass('bg-destructive')
-    expect(button).toHaveClass('text-destructive-foreground')
+    expect(button).toHaveClass('text-white')
   })
 
   it('applies custom className', () => {

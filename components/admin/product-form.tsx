@@ -220,84 +220,89 @@ export function ProductForm({ initialData }: ProductFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-12 pb-20">
       {/* SECTION 1: BASIC INFORMATION */}
       <div className="space-y-6">
-        <div className="border-b border-muted pb-2">
-            <h2 className="text-sm font-bold uppercase tracking-[0.2em]">General Information</h2>
+        <div className="border-b pb-2">
+            <h2 className="text-lg font-semibold tracking-tight">General Information</h2>
+            <p className="text-sm text-muted-foreground">Basic details about the product.</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-                <Label htmlFor="name" className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Full Product Name</Label>
-                <Input id="name" {...register("name")} className="rounded-none border-x-0 border-t-0 border-b border-muted focus-visible:ring-0 focus-visible:border-primary px-0 h-10 placeholder:text-muted-foreground/50" placeholder="e.g. Joanna Gray Leather Tote" />
-                {errors.name && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.name.message}</p>}
+                <Label htmlFor="name" className="text-sm font-medium">Full Product Name</Label>
+                <Input id="name" {...register("name")} className="h-10" placeholder="e.g. Joanna Gray Leather Tote" />
+                {errors.name && <p className="text-red-500 text-xs font-medium">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
-                <Label htmlFor="baseName" className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Model / Base Name</Label>
-                <Input id="baseName" {...register("baseName")} className="rounded-none border-x-0 border-t-0 border-b border-muted focus-visible:ring-0 focus-visible:border-primary px-0 h-10 placeholder:text-muted-foreground/50" placeholder="e.g. Joanna" />
-                {errors.baseName && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.baseName.message}</p>}
+                <Label htmlFor="baseName" className="text-sm font-medium">Model / Base Name</Label>
+                <Input id="baseName" {...register("baseName")} className="h-10" placeholder="e.g. Joanna" />
+                {errors.baseName && <p className="text-red-500 text-xs font-medium">{errors.baseName.message}</p>}
             </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-                <Label htmlFor="sku" className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">SKU / Product Code</Label>
-                <Input id="sku" {...register("sku")} className="rounded-none border-x-0 border-t-0 border-b border-muted focus-visible:ring-0 focus-visible:border-primary px-0 h-10 placeholder:text-muted-foreground/50" placeholder="e.g. Y1886" />
-                {errors.sku && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.sku.message}</p>}
+                <Label htmlFor="sku" className="text-sm font-medium">SKU / Product Code</Label>
+                <Input id="sku" {...register("sku")} className="h-10" placeholder="e.g. Y1886" />
+                {errors.sku && <p className="text-red-500 text-xs font-medium">{errors.sku.message}</p>}
             </div>
             <div className="space-y-2">
-                <Label htmlFor="color" className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Color Variant</Label>
-                <Input id="color" {...register("color")} className="rounded-none border-x-0 border-t-0 border-b border-muted focus-visible:ring-0 focus-visible:border-primary px-0 h-10 placeholder:text-muted-foreground/50" placeholder="e.g. Gray" />
-                {errors.color && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.color.message}</p>}
+                <Label htmlFor="color" className="text-sm font-medium">Color Variant</Label>
+                <Input id="color" {...register("color")} className="h-10" placeholder="e.g. Gray" />
+                {errors.color && <p className="text-red-500 text-xs font-medium">{errors.color.message}</p>}
             </div>
             <div className="space-y-2">
-                <Label htmlFor="dimensions" className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Dimensions</Label>
-                <Input id="dimensions" {...register("dimensions")} className="rounded-none border-x-0 border-t-0 border-b border-muted focus-visible:ring-0 focus-visible:border-primary px-0 h-10 placeholder:text-muted-foreground/50" placeholder="e.g. 45 cm x 45 cm" />
-                {errors.dimensions && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.dimensions.message}</p>}
+                <Label htmlFor="dimensions" className="text-sm font-medium">Dimensions</Label>
+                <Input id="dimensions" {...register("dimensions")} className="h-10" placeholder="e.g. 45 cm x 45 cm" />
+                {errors.dimensions && <p className="text-red-500 text-xs font-medium">{errors.dimensions.message}</p>}
             </div>
         </div>
 
         <div className="space-y-2">
             <div className="flex items-center gap-2">
-                <Label htmlFor="slug" className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Custom URL Slug</Label>
-                <Info className="w-3 h-3 text-muted-foreground" />
+                <Label htmlFor="slug" className="text-sm font-medium">Custom URL Slug</Label>
+                <Info className="w-4 h-4 text-muted-foreground" />
             </div>
-            <Input id="slug" {...register("slug")} className="rounded-none border-x-0 border-t-0 border-b border-muted focus-visible:ring-0 focus-visible:border-primary px-0 h-10 placeholder:text-muted-foreground/50 text-xs" placeholder="Leave blank to auto-generate (e.g. joanna-gray-leather-tote)" />
-            {errors.slug && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.slug.message}</p>}
+            <Input id="slug" {...register("slug")} className="h-10" placeholder="Leave blank to auto-generate (e.g. joanna-gray-leather-tote)" />
+            {errors.slug && <p className="text-red-500 text-xs font-medium">{errors.slug.message}</p>}
         </div>
       </div>
 
       {/* SECTION 2: DETAILS & PRICING */}
       <div className="space-y-6">
-        <div className="border-b border-muted pb-2">
-            <h2 className="text-sm font-bold uppercase tracking-[0.2em]">Pricing & Details</h2>
+        <div className="border-b pb-2">
+            <h2 className="text-lg font-semibold tracking-tight">Pricing & Details</h2>
+            <p className="text-sm text-muted-foreground">Set the price, stock, and product description.</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-                <Label htmlFor="price" className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Price (IDR)</Label>
+                <Label htmlFor="price" className="text-sm font-medium">Price (IDR)</Label>
                 <div className="relative">
-                    <span className="absolute left-0 bottom-2 text-sm font-medium">Rp</span>
-                    <Input id="price" type="number" {...register("price", { valueAsNumber: true })} className="rounded-none border-x-0 border-t-0 border-b border-muted focus-visible:ring-0 focus-visible:border-primary pl-7 pr-0 h-10 font-medium" />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">Rp</span>
+                    <Input id="price" type="number" {...register("price", { valueAsNumber: true })} className="pl-9 h-10 font-medium" />
                 </div>
-                {errors.price && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.price.message}</p>}
+                {errors.price && <p className="text-red-500 text-xs font-medium">{errors.price.message}</p>}
             </div>
             <div className="space-y-2">
-                <Label htmlFor="stock" className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Available Stock</Label>
-                <Input id="stock" type="number" {...register("stock", { valueAsNumber: true })} className="rounded-none border-x-0 border-t-0 border-b border-muted focus-visible:ring-0 focus-visible:border-primary px-0 h-10 font-medium" />
-                {errors.stock && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.stock.message}</p>}
+                <Label htmlFor="stock" className="text-sm font-medium">Available Stock</Label>
+                <Input id="stock" type="number" {...register("stock", { valueAsNumber: true })} className="h-10 font-medium" />
+                {errors.stock && <p className="text-red-500 text-xs font-medium">{errors.stock.message}</p>}
             </div>
         </div>
 
         <div className="space-y-2">
-            <Label htmlFor="description" className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Product Narrative</Label>
-            <Textarea id="description" {...register("description")} className="rounded-none border border-muted focus-visible:ring-0 focus-visible:border-primary min-h-[150px] p-4 text-sm leading-relaxed" placeholder="Describe the materials, hardware, and usage context..." />
-            {errors.description && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.description.message}</p>}
+            <Label htmlFor="description" className="text-sm font-medium">Product Description</Label>
+            <Textarea id="description" {...register("description")} className="min-h-[150px] p-4 text-sm resize-y rounded-md" placeholder="Describe the materials, hardware, and usage context..." />
+            {errors.description && <p className="text-red-500 text-xs font-medium">{errors.description.message}</p>}
         </div>
       </div>
 
       {/* SECTION 3: MEDIA */}
       <div className="space-y-6">
-        <div className="border-b border-muted pb-2 flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-[0.2em]">Product Media</h2>
+        <div className="border-b pb-2 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">Product Media</h2>
+              <p className="text-sm text-muted-foreground">Upload and manage product images.</p>
+            </div>
             {totalOriginalSize > 0 && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -310,64 +315,63 @@ export function ProductForm({ initialData }: ProductFormProps) {
         </div>
 
         {/* Compression Info Banner */}
-        <div className="bg-muted/50 border border-muted p-4 flex items-start gap-3">
-          <Info className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-          <div className="text-xs text-muted-foreground space-y-1">
-            <p className="font-medium">Kompresi Otomatis Gambar</p>
-            <p>Gambar akan dikompresi otomatis menjadi format WebP (max 150KB) tanpa kehilangan kualitas visual. 
-            File akan disimpan dengan format: <code className="bg-background px-1 py-0.5 rounded text-[10px]">products/{"{model}"}/{"{model}-{color}-{urutan}"}.webp</code></p>
+        <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900 rounded-lg p-4 flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground">Automatic Image Compression</p>
+            <p>Images will be automatically compressed to WebP format (max 150KB) to ensure fast loading times.</p>
           </div>
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {imagePreviews.map((preview, index) => (
-            <div key={preview.id} className="relative group aspect-[3/4] bg-muted overflow-hidden">
+            <div key={preview.id} className="relative group aspect-[3/4] bg-muted rounded-md overflow-hidden border border-border">
               <Image 
                 src={preview.previewUrl} 
                 alt={`Product Image ${index + 1}`} 
                 fill 
-                className="object-cover transition-transform duration-500 group-hover:scale-110" 
+                className="object-cover transition-transform duration-300 group-hover:scale-105" 
               />
               
               {/* Status Overlay */}
               {preview.status === "pending" || preview.status === "compressing" ? (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
-                  <Loader2 className="w-6 h-6 animate-spin mb-2" />
-                  <span className="text-[8px] uppercase tracking-widest">Compressing...</span>
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center text-foreground">
+                  <Loader2 className="w-5 h-5 animate-spin mb-2" />
+                  <span className="text-xs font-medium">Compressing...</span>
                 </div>
               ) : (
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-start justify-end p-2">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-start justify-end p-2">
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="bg-white/90 hover:bg-white text-black rounded-none p-1.5 transition-colors"
+                      className="bg-background/90 hover:bg-background text-foreground rounded-md p-1.5 transition-colors shadow-sm"
                     >
-                      <XCircle className="w-4 h-4" />
+                      <XCircle className="w-4 h-4 text-red-500" />
                     </button>
                 </div>
               )}
 
               {/* Compression Stats Badge - Only for new images */}
               {!preview.isExisting && preview.status === "compressed" && preview.savings && preview.savings > 0 && (
-                <div className="absolute top-2 left-2 bg-green-500/90 text-white text-[8px] uppercase tracking-widest px-2 py-1 font-bold">
+                <div className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
                   -{preview.savings}%
                 </div>
               )}
 
               {/* Cover Image Label */}
               {index === 0 && (
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[8px] uppercase tracking-widest py-1 text-center">
-                    Hero / Thumbnail
+                <div className="absolute bottom-0 left-0 right-0 bg-primary/90 text-primary-foreground text-[10px] font-medium py-1.5 text-center">
+                    Primary Image
                 </div>
               )}
 
               {/* Size Info on Hover - Only for new images */}
               {!preview.isExisting && preview.compressedSize && (
-                <div className="absolute bottom-0 left-0 right-0 py-1.5 px-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="text-white text-[8px] text-center">
-                    <span className="line-through opacity-60">{formatFileSize(preview.originalSize)}</span>
+                <div className="absolute bottom-0 left-0 right-0 py-2 px-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-white text-[10px] text-center font-medium">
+                    <span className="line-through opacity-70">{formatFileSize(preview.originalSize)}</span>
                     <span className="mx-1">→</span>
-                    <span className="font-bold">{formatFileSize(preview.compressedSize)}</span>
+                    <span>{formatFileSize(preview.compressedSize)}</span>
                   </div>
                 </div>
               )}
@@ -376,20 +380,20 @@ export function ProductForm({ initialData }: ProductFormProps) {
 
           {/* Upload Button */}
           <label className={`
-            flex flex-col items-center justify-center aspect-[3/4] border border-dashed border-muted 
-            cursor-pointer hover:bg-muted/50 transition-colors group
+            flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-muted-foreground/25 rounded-md
+            cursor-pointer hover:bg-muted/50 hover:border-muted-foreground/50 transition-colors group
             ${isCompressing ? "pointer-events-none opacity-50" : ""}
           `}>
             {isCompressing ? (
               <>
                 <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
-                <span className="text-[8px] uppercase tracking-[0.2em] text-muted-foreground mt-4 font-bold">Processing...</span>
+                <span className="text-xs font-medium text-muted-foreground mt-3">Processing...</span>
               </>
             ) : (
               <>
-                <UploadCloud className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" strokeWidth={1.5} />
-                <span className="text-[8px] uppercase tracking-[0.2em] text-muted-foreground mt-4 font-bold group-hover:text-primary transition-colors">Add Image</span>
-                <span className="text-[7px] text-muted-foreground/60 mt-1">Auto-compress to WebP</span>
+                <UploadCloud className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                <span className="text-sm font-medium text-muted-foreground mt-3 group-hover:text-primary transition-colors">Add Image</span>
+                <span className="text-xs text-muted-foreground/60 mt-1">PNG, JPG, WEBP</span>
               </>
             )}
             <Input 
@@ -402,22 +406,22 @@ export function ProductForm({ initialData }: ProductFormProps) {
             />
           </label>
         </div>
-        {errors.images && <p className="text-red-500 text-[10px] uppercase tracking-tight">{errors.images.message}</p>}
+        {errors.images && <p className="text-red-500 text-xs font-medium">{errors.images.message}</p>}
       </div>
 
-      <div className="pt-10">
+      <div className="pt-6 border-t flex justify-end gap-4">
         <Button 
             type="submit" 
             disabled={isSubmitting || isCompressing} 
-            className="w-full h-14 bg-black text-white hover:bg-black/90 rounded-none uppercase tracking-[0.3em] text-xs transition-all disabled:opacity-50"
+            className="w-full sm:w-auto h-10 px-8 rounded-md font-medium transition-all"
         >
             {isCompressing 
               ? "Compressing Images..." 
               : isSubmitting 
-                ? "Syncing with Atelier..." 
+                ? "Saving..." 
                 : isEditMode 
-                  ? "Update Masterpiece" 
-                  : "Finalize Collection Piece"
+                  ? "Save Changes" 
+                  : "Create Product"
             }
         </Button>
       </div>

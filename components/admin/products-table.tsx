@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import {
   Table,
@@ -16,7 +16,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { ArchiveProductButton } from "@/components/admin/archive-product-button";
-import { Search, X, Package, SlidersHorizontal, Archive } from "lucide-react";
+import { Search, X, Package, SlidersHorizontal, Archive, Pencil } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Product } from "@/lib/types";
 
 interface ProductsTableProps {
@@ -30,35 +36,31 @@ export function ProductsTable({ products }: ProductsTableProps) {
   const [filterColor, setFilterColor] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<TabView>("active");
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Debounce search query to avoid excessive re-computation
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  // Split products by archive status
   const activeProducts = useMemo(() => products.filter((p) => !p.is_archived), [products]);
   const archivedProducts = useMemo(() => products.filter((p) => p.is_archived), [products]);
 
-  // Current tab products
   const currentProducts = activeTab === "active" ? activeProducts : archivedProducts;
 
-  // Extract unique colors for filter dropdown (from current tab)
   const uniqueColors = useMemo(() => {
     const colors = new Set(currentProducts.map((p) => p.color).filter(Boolean));
     return Array.from(colors).sort();
   }, [currentProducts]);
 
-  // Extract unique base names for stats
   const uniqueModels = useMemo(() => {
     const models = new Set(currentProducts.map((p) => p.baseName).filter(Boolean));
     return models.size;
   }, [currentProducts]);
 
-  // Filter products based on debounced search and filters
   const filteredProducts = useMemo(() => {
     return currentProducts.filter((product) => {
       const query = debouncedSearch.toLowerCase().trim();
 
-      // Search across multiple fields
       const matchesSearch =
         !query ||
         product.name.toLowerCase().includes(query) ||
@@ -67,7 +69,6 @@ export function ProductsTable({ products }: ProductsTableProps) {
         product.color?.toLowerCase().includes(query) ||
         product.price.toString().includes(query);
 
-      // Color filter
       const matchesColor = !filterColor || product.color === filterColor;
 
       return matchesSearch && matchesColor;
@@ -83,311 +84,348 @@ export function ProductsTable({ products }: ProductsTableProps) {
 
   const hasActiveFilters = searchQuery || filterColor;
 
+  const handleTabChange = (newTab: TabView) => {
+    if (newTab === activeTab || isAnimating) return;
+    
+    const direction = newTab === "archived" ? "left" : "right";
+    setSlideDirection(direction);
+    setIsAnimating(true);
+    
+    // After slide-out animation, switch content
+    setTimeout(() => {
+      setActiveTab(newTab);
+      clearFilters();
+      setSlideDirection(direction === "left" ? "right" : "left");
+      
+      // After content switch, slide in from opposite side
+      requestAnimationFrame(() => {
+        setSlideDirection(null);
+        setTimeout(() => {
+          setIsAnimating(false);
+        }, 300);
+      });
+    }, 200);
+  };
+
+  // Animation styles for the table content
+  const getSlideStyles = (): React.CSSProperties => {
+    if (slideDirection === null) {
+      return {
+        transform: "translateX(0)",
+        opacity: 1,
+        transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      };
+    }
+    
+    const offset = slideDirection === "left" ? "-20px" : "20px";
+    return {
+      transform: `translateX(${offset})`,
+      opacity: 0,
+      transition: "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+    };
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Stats Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-background border border-border p-4">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-neutral-200 p-5 shadow-sm">
+          <p className="text-sm font-medium text-neutral-500">
             {activeTab === "active" ? "Active Products" : "Archived Products"}
           </p>
-          <p className="text-2xl font-bold mt-1">{currentProducts.length}</p>
+          <p className="text-3xl font-bold mt-2 text-neutral-900">{currentProducts.length}</p>
         </div>
-        <div className="bg-background border border-border p-4">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+        <div className="bg-white rounded-xl border border-neutral-200 p-5 shadow-sm">
+          <p className="text-sm font-medium text-neutral-500">
             Models
           </p>
-          <p className="text-2xl font-bold mt-1">{uniqueModels}</p>
+          <p className="text-3xl font-bold mt-2 text-neutral-900">{uniqueModels}</p>
         </div>
-        <div className="bg-background border border-border p-4">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+        <div className="bg-white rounded-xl border border-neutral-200 p-5 shadow-sm">
+          <p className="text-sm font-medium text-neutral-500">
             Colors
           </p>
-          <p className="text-2xl font-bold mt-1">{uniqueColors.length}</p>
+          <p className="text-3xl font-bold mt-2 text-neutral-900">{uniqueColors.length}</p>
         </div>
-        <div className="bg-background border border-border p-4">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+        <div className="bg-white rounded-xl border border-neutral-200 p-5 shadow-sm">
+          <p className="text-sm font-medium text-neutral-500">
             Total Stock
           </p>
-          <p className="text-2xl font-bold mt-1">{totalStock}</p>
+          <p className="text-3xl font-bold mt-2 text-neutral-900">{totalStock}</p>
         </div>
       </div>
 
-      {/* Tab Switcher */}
-      <div className="flex border-b border-border">
-        <button
-          onClick={() => { setActiveTab("active"); clearFilters(); }}
-          className={`px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] font-bold transition-colors relative ${
-            activeTab === "active"
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Active
-          <span className="ml-1.5 text-[9px] font-medium px-1.5 py-0.5 bg-muted rounded-sm">
-            {activeProducts.length}
-          </span>
-          {activeTab === "active" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
-          )}
-        </button>
-        <button
-          onClick={() => { setActiveTab("archived"); clearFilters(); }}
-          className={`px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] font-bold transition-colors relative flex items-center gap-1.5 ${
-            activeTab === "archived"
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Archive className="h-3 w-3" />
-          Archived
-          <span className="ml-1 text-[9px] font-medium px-1.5 py-0.5 bg-muted rounded-sm">
-            {archivedProducts.length}
-          </span>
-          {activeTab === "archived" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
-          )}
-        </button>
-      </div>
-
-      {/* Search & Filter Bar */}
-      <div className="space-y-3">
-        <div className="flex gap-2">
-          {/* Search Input */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="product-search"
-              placeholder="Search by name, model, SKU, or color..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-11 rounded-none border-border bg-background text-sm placeholder:text-muted-foreground/50"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+      <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-neutral-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          {/* Tab Switcher */}
+          <div className="flex bg-neutral-100 p-1 rounded-lg">
+            <button
+              onClick={() => handleTabChange("active")}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                activeTab === "active"
+                  ? "bg-white text-neutral-900 shadow-sm"
+                  : "text-neutral-500 hover:text-neutral-700"
+              }`}
+            >
+              Active
+              <span className={`ml-2 text-xs ${
+                activeTab === "active" ? "text-neutral-500" : "text-neutral-400"
+              }`}>
+                {activeProducts.length}
+              </span>
+            </button>
+            <button
+              onClick={() => handleTabChange("archived")}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-2 ${
+                activeTab === "archived"
+                  ? "bg-white text-neutral-900 shadow-sm"
+                  : "text-neutral-500 hover:text-neutral-700"
+              }`}
+            >
+              <Archive className="h-3.5 w-3.5" />
+              Archived
+              <span className={`text-xs ${
+                activeTab === "archived" ? "text-neutral-500" : "text-neutral-400"
+              }`}>
+                {archivedProducts.length}
+              </span>
+            </button>
           </div>
 
-          {/* Filter Toggle */}
-          <Button
-            variant={showFilters ? "default" : "outline"}
-            size="icon"
-            className="h-11 w-11 rounded-none shrink-0"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </Button>
+          {/* Search & Filter Bar */}
+          <div className="flex gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <Input
+                id="product-search"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 rounded-md bg-white text-sm border-neutral-200 focus:border-neutral-400 focus:ring-neutral-400"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <Button
+              variant={showFilters || hasActiveFilters ? "secondary" : "outline"}
+              size="icon"
+              className="h-9 w-9 rounded-md shrink-0 border-neutral-200"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Expandable Filters */}
         {showFilters && (
-          <div className="flex flex-wrap gap-2 items-center p-3 border border-border bg-muted/30 animate-in fade-in slide-in-from-top-2 duration-200">
-            <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold mr-1">
-              Color:
-            </span>
-            <button
-              onClick={() => setFilterColor("")}
-              className={`px-3 py-1.5 text-[10px] uppercase tracking-widest border transition-colors ${
-                !filterColor
-                  ? "bg-black text-white border-black"
-                  : "bg-background border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-              }`}
-            >
-              All
-            </button>
-            {uniqueColors.map((color) => (
-              <button
-                key={color}
-                onClick={() =>
-                  setFilterColor(filterColor === color ? "" : color)
-                }
-                className={`px-3 py-1.5 text-[10px] uppercase tracking-widest border transition-colors ${
-                  filterColor === color
-                    ? "bg-black text-white border-black"
-                    : "bg-background border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                }`}
+          <div className="p-4 border-b border-neutral-200 bg-neutral-50 animate-in fade-in slide-in-from-top-2">
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-sm font-medium text-neutral-500 mr-2">
+                Color Filter:
+              </span>
+              <Badge
+                variant={!filterColor ? "default" : "outline"}
+                className="cursor-pointer hover:bg-neutral-800 rounded-md font-normal px-3 py-1 text-sm"
+                onClick={() => setFilterColor("")}
               >
-                {color}
-              </button>
-            ))}
+                All Colors
+              </Badge>
+              {uniqueColors.map((color) => (
+                <Badge
+                  key={color}
+                  variant={filterColor === color ? "default" : "outline"}
+                  className={`cursor-pointer rounded-md font-normal px-3 py-1 text-sm ${
+                    filterColor === color
+                      ? "bg-neutral-900 text-white hover:bg-neutral-800"
+                      : "border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+                  }`}
+                  onClick={() =>
+                    setFilterColor(filterColor === color ? "" : color)
+                  }
+                >
+                  {color}
+                </Badge>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Active Filters & Results Count */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-              Showing{" "}
-              <span className="font-bold text-foreground">
-                {filteredProducts.length}
-              </span>{" "}
-              of {currentProducts.length} {activeTab === "active" ? "products" : "archived"}
-            </p>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="text-[10px] uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors flex items-center gap-1"
-              >
-                <X className="h-3 w-3" />
-                Clear Filters
-              </button>
-            )}
+        {/* Products Table with Slide Animation */}
+        <div ref={tableContainerRef} className="overflow-hidden">
+          <div style={getSlideStyles()}>
+            <Table>
+              <TableHeader className="bg-neutral-50">
+                <TableRow className="hover:bg-transparent border-b border-neutral-200">
+                  <TableHead className="w-[70px] font-medium pl-4 text-neutral-500 text-xs uppercase tracking-wider">
+                    Image
+                  </TableHead>
+                  <TableHead className="font-medium text-neutral-500 text-xs uppercase tracking-wider">
+                    Product
+                  </TableHead>
+                  <TableHead className="font-medium hidden md:table-cell text-neutral-500 text-xs uppercase tracking-wider">
+                    SKU
+                  </TableHead>
+                  <TableHead className="font-medium hidden sm:table-cell text-neutral-500 text-xs uppercase tracking-wider">
+                    Color
+                  </TableHead>
+                  <TableHead className="font-medium text-neutral-500 text-xs uppercase tracking-wider">
+                    Price
+                  </TableHead>
+                  <TableHead className="font-medium text-center text-neutral-500 text-xs uppercase tracking-wider">
+                    Stock
+                  </TableHead>
+                  <TableHead className="font-medium text-right pr-4 text-neutral-500 text-xs uppercase tracking-wider">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProducts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-48 text-center">
+                      <div className="flex flex-col items-center gap-2 text-neutral-400">
+                        {activeTab === "archived" ? (
+                          <Archive className="h-10 w-10 opacity-30 mb-2" />
+                        ) : (
+                          <Package className="h-10 w-10 opacity-30 mb-2" />
+                        )}
+                        <p className="text-sm font-medium text-neutral-600">
+                          {activeTab === "archived"
+                            ? "No archived products"
+                            : "No products found"}
+                        </p>
+                        <p className="text-sm text-neutral-400">
+                          {activeTab === "archived"
+                            ? "Archived products will appear here."
+                            : "Try adjusting your search or filters."}
+                        </p>
+                        {hasActiveFilters && (
+                           <Button variant="link" onClick={clearFilters} className="text-neutral-900 mt-2">
+                             Clear all filters
+                           </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredProducts.map((product) => (
+                    <TableRow
+                      key={product.id}
+                      className={`group hover:bg-neutral-50 transition-colors border-b border-neutral-100 ${product.is_archived ? "opacity-70" : ""}`}
+                    >
+                      <TableCell className="py-3 pl-4">
+                        <div className="relative w-10 h-10 rounded-md bg-neutral-100 overflow-hidden border border-neutral-200">
+                          <Image
+                            src={
+                              product.images && product.images.length > 0
+                                ? product.images[0]
+                                : "/placeholder-bag.jpg"
+                            }
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                            sizes="40px"
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm text-neutral-900">{product.name}</span>
+                          <span className="text-xs text-neutral-400">
+                            {product.baseName}
+                            {product.dimensions && ` · ${product.dimensions}`}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-1 rounded-md font-mono">
+                          {product.sku || "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <span className="text-sm text-neutral-600">
+                          {product.color || "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium text-neutral-900">
+                          Rp {product.price.toLocaleString("id-ID")}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge
+                          variant="secondary"
+                          className={`font-medium rounded-md text-xs ${
+                            product.stock === 0
+                              ? "bg-red-50 text-red-700 hover:bg-red-50 border border-red-200"
+                              : product.stock <= 2
+                              ? "bg-amber-50 text-amber-700 hover:bg-amber-50 border border-amber-200"
+                              : "bg-neutral-100 text-neutral-700 hover:bg-neutral-100 border border-neutral-200"
+                          }`}
+                        >
+                          {product.stock}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right pr-4">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {activeTab === "active" ? (
+                            <>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    asChild
+                                    className="h-8 w-8 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-md"
+                                  >
+                                    <Link
+                                      href={`/admin/dashboard/products/${product.id}/edit`}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Link>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="text-xs">
+                                  Edit product
+                                </TooltipContent>
+                              </Tooltip>
+                              <ArchiveProductButton
+                                productId={product.id}
+                                isArchived={false}
+                              />
+                              <DeleteProductButton productId={product.id} />
+                            </>
+                          ) : (
+                            <>
+                              <ArchiveProductButton
+                                productId={product.id}
+                                isArchived={true}
+                              />
+                              <DeleteProductButton productId={product.id} />
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
-      </div>
-
-      {/* Products Table */}
-      <div className="border border-border">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[70px] text-[9px] uppercase tracking-[0.2em] font-bold">
-                Image
-              </TableHead>
-              <TableHead className="text-[9px] uppercase tracking-[0.2em] font-bold">
-                Product
-              </TableHead>
-              <TableHead className="text-[9px] uppercase tracking-[0.2em] font-bold hidden md:table-cell">
-                SKU
-              </TableHead>
-              <TableHead className="text-[9px] uppercase tracking-[0.2em] font-bold hidden sm:table-cell">
-                Color
-              </TableHead>
-              <TableHead className="text-[9px] uppercase tracking-[0.2em] font-bold">
-                Price
-              </TableHead>
-              <TableHead className="text-[9px] uppercase tracking-[0.2em] font-bold text-center">
-                Stock
-              </TableHead>
-              <TableHead className="text-[9px] uppercase tracking-[0.2em] font-bold text-right">
-                Actions
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredProducts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    {activeTab === "archived" ? (
-                      <Archive className="h-8 w-8 opacity-40" />
-                    ) : (
-                      <Package className="h-8 w-8 opacity-40" />
-                    )}
-                    <p className="text-[10px] uppercase tracking-widest font-bold">
-                      {activeTab === "archived"
-                        ? "No archived products"
-                        : "No products found"}
-                    </p>
-                    <p className="text-xs text-muted-foreground/70">
-                      {activeTab === "archived"
-                        ? "Archived products will appear here"
-                        : "Try adjusting your search or filters"}
-                    </p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredProducts.map((product) => (
-                <TableRow
-                  key={product.id}
-                  className={`group ${product.is_archived ? "opacity-60" : ""}`}
-                >
-                  <TableCell className="py-2">
-                    <div className="relative w-[50px] h-[50px] bg-muted overflow-hidden">
-                      <Image
-                        src={
-                          product.images && product.images.length > 0
-                            ? product.images[0]
-                            : "/placeholder-bag.jpg"
-                        }
-                        alt={product.name}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        sizes="50px"
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-sm">{product.name}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {product.baseName}
-                        {product.dimensions && ` · ${product.dimensions}`}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {product.sku || "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <span className="inline-flex items-center px-2 py-0.5 text-[10px] uppercase tracking-wider border border-border bg-muted/50">
-                      {product.color || "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm font-medium">
-                      Rp {product.price.toLocaleString("id-ID")}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span
-                      className={`inline-flex items-center justify-center w-8 h-8 text-xs font-bold ${
-                        product.stock === 0
-                          ? "bg-red-100 text-red-700"
-                          : product.stock <= 2
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {product.stock}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                      {activeTab === "active" ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            asChild
-                            className="rounded-none h-8 text-[10px] uppercase tracking-widest"
-                          >
-                            <Link
-                              href={`/admin/dashboard/products/${product.id}/edit`}
-                            >
-                              Edit
-                            </Link>
-                          </Button>
-                          <ArchiveProductButton
-                            productId={product.id}
-                            isArchived={false}
-                          />
-                          <DeleteProductButton productId={product.id} />
-                        </>
-                      ) : (
-                        <>
-                          <ArchiveProductButton
-                            productId={product.id}
-                            isArchived={true}
-                          />
-                          <DeleteProductButton productId={product.id} />
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        
+        <div className="p-4 border-t border-neutral-200 bg-neutral-50/50 text-xs text-neutral-500 flex justify-between items-center">
+          <span>
+            Showing <span className="font-medium text-neutral-700">{filteredProducts.length}</span> of {currentProducts.length} products
+          </span>
+        </div>
       </div>
     </div>
   );

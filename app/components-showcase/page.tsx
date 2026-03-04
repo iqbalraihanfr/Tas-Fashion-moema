@@ -193,19 +193,19 @@ export default function ComponentsShowcase() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl">
           <div className="space-y-2">
             <label className="text-sm font-medium">Default</label>
-            <Input variant="default" placeholder="Enter text..." />
+            <Input placeholder="Enter text..." />
             <p className="text-xs text-muted-foreground">Normal input state</p>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Error</label>
-            <Input variant="error" placeholder="invalid@email" defaultValue="invalid" />
+            <Input placeholder="invalid@email" defaultValue="invalid" className="border-destructive" />
             <p className="text-xs text-destructive">This field is required</p>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Success</label>
-            <Input variant="success" placeholder="valid@email.com" defaultValue="user@example.com" />
+            <Input placeholder="valid@email.com" defaultValue="user@example.com" className="border-green-500" />
             <p className="text-xs text-green-600">Looks good!</p>
           </div>
         </div>
@@ -221,8 +221,8 @@ export default function ComponentsShowcase() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              variant={
-                email === "" ? "default" : isValidEmail ? "success" : "error"
+              className={
+                email === "" ? "" : isValidEmail ? "border-green-500" : "border-destructive"
               }
             />
             {email !== "" && (

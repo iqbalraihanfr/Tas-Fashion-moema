@@ -4,6 +4,11 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { archiveProduct, unarchiveProduct } from "@/lib/admin-actions";
 import { Archive, ArchiveRestore } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ArchiveProductButtonProps {
   productId: string;
@@ -17,24 +22,28 @@ export function ArchiveProductButton({ productId, isArchived }: ArchiveProductBu
   return (
     <form action={formAction}>
       <input type="hidden" name="productId" value={productId} />
-      <Button
-        variant="outline"
-        size="sm"
-        type="submit"
-        disabled={isPending}
-        className="rounded-none h-8"
-        title={isArchived ? "Unarchive product" : "Archive product"}
-      >
-        {isPending ? (
-          <span className="text-[10px] uppercase tracking-widest">
-            {isArchived ? "Restoring..." : "Archiving..."}
-          </span>
-        ) : isArchived ? (
-          <ArchiveRestore className="h-4 w-4" />
-        ) : (
-          <Archive className="h-4 w-4" />
-        )}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            type="submit"
+            disabled={isPending}
+            className="h-8 w-8 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-md"
+          >
+            {isPending ? (
+              <span className="h-4 w-4 border-2 border-neutral-300 border-t-neutral-600 rounded-full animate-spin" />
+            ) : isArchived ? (
+              <ArchiveRestore className="h-4 w-4" />
+            ) : (
+              <Archive className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="text-xs">
+          {isArchived ? "Restore product" : "Archive product"}
+        </TooltipContent>
+      </Tooltip>
       {state?.error && <p className="text-red-500 text-xs mt-1">{state.error}</p>}
     </form>
   );

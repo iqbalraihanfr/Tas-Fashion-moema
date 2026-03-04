@@ -8,16 +8,16 @@ export default async function AdminProductsPage() {
   const products = await getAdminProducts();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Product Management</h1>
-          <p className="text-xs text-muted-foreground mt-1">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Product Management</h1>
+          <p className="text-sm text-muted-foreground">
             Manage your collection inventory
           </p>
         </div>
-        <Button asChild className="rounded-none h-10 px-6 text-[10px] uppercase tracking-[0.2em] font-bold">
+        <Button asChild className="h-9 px-4 rounded-md text-sm font-medium">
           <Link href="/admin/dashboard/products/new">
             <Plus className="h-4 w-4 mr-2" />
             Add Product
