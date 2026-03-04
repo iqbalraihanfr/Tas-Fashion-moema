@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, Heart, Share2 } from "lucide-react";
-import Link from "next/link";
+import { Check, Heart, Share2, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/context/cart-context";
+import { useProductNav } from "@/features/products/ProductNavProvider";
 import { Product } from "@/lib/types";
 
 // Mock colors for now as DB schema doesn't have colors
@@ -16,10 +17,49 @@ const MOCK_COLORS = [
     { name: "Taupe", hex: "#483C32" }
 ];
 
-export function ProductDetailClient({ product }: { product: Product }) {
+interface ProductDetailClientProps {
+  product: Product;
+  recommendedProducts: Product[];
+}
+
+export function ProductDetailClient({ product, recommendedProducts }: ProductDetailClientProps) {
   const [selectedColor, setSelectedColor] = useState(MOCK_COLORS[0]);
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { addItem } = useCart();
+  const { setProductInfo, setIsInRecommendationSection } = useProductNav();
+  const recommendationRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  // Register product info in nav context
+  useEffect(() => {
+    setProductInfo({
+      name: product.name,
+      price: product.price,
+      image: product.images && product.images.length > 0 ? product.images[0] : "/placeholder-bag.jpg",
+      slug: product.slug,
+    });
+    return () => setProductInfo(null);
+  }, [product, setProductInfo]);
+
+  // IntersectionObserver for recommendation section
+  useEffect(() => {
+    const el = recommendationRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInRecommendationSection(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      setIsInRecommendationSection(false);
+    };
+  }, [setIsInRecommendationSection]);
 
   const handleAddToBag = () => {
     addItem({
@@ -34,39 +74,81 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
   const images = product.images && product.images.length > 0 ? product.images : ["/placeholder-bag.jpg"];
 
+  // Carousel scroll helpers
+  const scrollCarousel = (direction: "left" | "right") => {
+    if (!carouselRef.current) return;
+    const scrollAmount = carouselRef.current.clientWidth * 0.7;
+    carouselRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
+
   return (
-    <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+    <>
+      {/* Fullscreen Overlay */}
+      {isFullscreen && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 md:p-12 cursor-zoom-out"
+          onClick={() => setIsFullscreen(false)}
+        >
+          <button 
+            className="absolute top-4 right-4 md:top-8 md:right-8 text-white/70 hover:text-white transition-colors"
+            onClick={() => setIsFullscreen(false)}
+            aria-label="Close fullscreen"
+          >
+            <X className="w-8 h-8 md:w-10 md:h-10" />
+          </button>
+          <div className="relative w-full h-full max-w-6xl mx-auto">
+            <Image 
+              src={images[selectedImageIdx]} 
+              alt={`${product.name} fullscreen view`} 
+              fill 
+              className="object-contain" 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Product Detail Section */}
+      <div data-product-section className="flex flex-col lg:flex-row gap-12 lg:gap-20">
          {/* Left: Image Gallery */}
         <div className="flex-1 lg:w-[60%] flex flex-col md:flex-row gap-4 h-fit">
            {/* Thumbnails */}
            <div className="order-2 md:order-1 flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:max-h-[80vh] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] shrink-0 md:w-24 pb-2 md:pb-0">
-             {images.map((img, idx) => (
-               <button 
-                 key={idx} 
-                 onClick={() => setSelectedImageIdx(idx)}
-                 className={`relative aspect-[3/4] shrink-0 w-20 md:w-full bg-secondary border transition-colors ${selectedImageIdx === idx ? 'border-primary' : 'border-transparent hover:border-gray-300'}`}
-               >
-                 <Image 
-                   src={img} 
-                   alt={`${product.name} thumbnail ${idx + 1}`} 
-                   fill 
-                   className="object-contain p-1" 
-                 />
-               </button>
-             ))}
-           </div>
+              {images.map((img, idx) => (
+                <button 
+                  key={idx} 
+                  onClick={() => setSelectedImageIdx(idx)}
+                  className={`relative shrink-0 w-20 md:w-full border-2 transition-colors overflow-hidden ${selectedImageIdx === idx ? 'border-primary' : 'border-transparent hover:border-gray-300'}`}
+                >
+                  <Image 
+                    src={img} 
+                    alt={`${product.name} thumbnail ${idx + 1}`} 
+                    width={100}
+                    height={125}
+                    className="w-full h-auto block" 
+                  />
+                </button>
+              ))}
+            </div>
            
            {/* Main Image */}
-           <div className="order-1 md:order-2 relative flex-1 bg-secondary aspect-[4/5] md:aspect-auto md:h-[80vh]">
-             <Image 
-               src={images[selectedImageIdx]} 
-               alt={`${product.name} main view`} 
-               fill 
-               priority
-               className="object-contain" 
-             />
-           </div>
-        </div>
+           <button 
+              className="order-1 md:order-2 flex-1 cursor-zoom-in group overflow-hidden"
+              onClick={() => setIsFullscreen(true)}
+              title="Click to view full screen"
+            >
+              <Image 
+                src={images[selectedImageIdx]} 
+                alt={`${product.name} main view`} 
+                width={800}
+                height={1000}
+                priority
+                className="w-full h-auto block transition-transform duration-500" 
+              />
+            </button>
+         </div>
 
         {/* Right: Product Info (Sticky) */}
         <div className="lg:w-[35%] lg:sticky lg:top-24 h-fit space-y-8">
@@ -134,5 +216,64 @@ export function ProductDetailClient({ product }: { product: Product }) {
           </div>
         </div>
       </div>
+
+      {/* Recommendation Section */}
+      {recommendedProducts.length > 0 && (
+        <div ref={recommendationRef} data-recommendation-section className="mt-24 pt-16 border-t border-gray-200">
+          <h2 className="text-center text-xs font-bold uppercase tracking-[0.35em] mb-12">
+            Anda Mungkin Juga Menyukai
+          </h2>
+
+          <div className="relative group/carousel">
+            {/* Left Arrow */}
+            <button
+              onClick={() => scrollCarousel("left")}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 border border-gray-200 rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover/carousel:opacity-100 transition-opacity hover:bg-white -translate-x-1/2"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            {/* Carousel */}
+            <div
+              ref={carouselRef}
+              className="flex gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory scroll-smooth pb-4"
+            >
+              {recommendedProducts.map((rec) => (
+                <Link
+                  key={rec.id}
+                  href={`/product/${rec.slug}`}
+                  className="shrink-0 w-[220px] md:w-[260px] snap-start group"
+                >
+                  <div className="relative aspect-4/5 overflow-hidden bg-gray-50 mb-4">
+                    <Image
+                      src={rec.images && rec.images.length > 0 ? rec.images[0] : "/placeholder-bag.jpg"}
+                      alt={rec.name}
+                      fill
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <h3 className="text-xs font-semibold uppercase tracking-widest mb-1 truncate group-hover:text-muted-foreground transition-colors">
+                    {rec.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground tracking-wide">
+                    Rp {rec.price.toLocaleString("id-ID")}
+                  </p>
+                </Link>
+              ))}
+            </div>
+
+            {/* Right Arrow */}
+            <button
+              onClick={() => scrollCarousel("right")}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 border border-gray-200 rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover/carousel:opacity-100 transition-opacity hover:bg-white translate-x-1/2"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

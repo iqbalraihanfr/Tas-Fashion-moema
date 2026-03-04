@@ -44,6 +44,7 @@ export async function createProduct(input: CreateProductInput) {
     price: input.price,
     stock: input.stock,
     images: imageUrls,
+    is_archived: false,
   });
 }
 
@@ -103,4 +104,20 @@ export async function deleteProduct(id: string) {
 
   // 2. Delete from DB
   await productRepo.deleteProduct(id);
+}
+
+export async function archiveProduct(id: string) {
+  const product = await productRepo.getProductById(id);
+  if (!product) {
+    throw new AppError("Product not found", 404, "NOT_FOUND");
+  }
+  await productRepo.archiveProduct(id);
+}
+
+export async function unarchiveProduct(id: string) {
+  const product = await productRepo.getProductById(id);
+  if (!product) {
+    throw new AppError("Product not found", 404, "NOT_FOUND");
+  }
+  await productRepo.unarchiveProduct(id);
 }

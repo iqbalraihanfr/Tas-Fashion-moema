@@ -11,7 +11,7 @@ export interface ProductFilter {
 }
 
 export async function getAllProducts(filter: ProductFilter = {}): Promise<Product[]> {
-  let query = supabase.from('Product').select('*');
+  let query = supabase.from('Product').select('*').eq('is_archived', false);
 
   if (filter.search) {
     const s = filter.search.replace(/'/g, "''"); // escape single quotes
@@ -45,6 +45,23 @@ export async function getAllProducts(filter: ProductFilter = {}): Promise<Produc
   if (error) {
     console.error("Repository Error [getAllProducts]:", error);
     throw new AppError("Failed to fetch products", 500, "DATABASE_ERROR");
+  }
+
+  return products as Product[];
+}
+
+export async function getRecommendedProducts(excludeSlug: string, limit = 8): Promise<Product[]> {
+  const { data: products, error } = await supabase
+    .from('Product')
+    .select('*')
+    .eq('is_archived', false)
+    .neq('slug', excludeSlug)
+    .order('createdAt', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Repository Error [getRecommendedProducts]:", error);
+    return []; // Graceful fallback — recommendations are non-critical
   }
 
   return products as Product[];
@@ -146,5 +163,29 @@ export async function updateProductStock(id: string, newStock: number): Promise<
   if (error) {
     console.error("Repository Error [updateProductStock]:", error);
     throw new AppError("Failed to update product stock", 500, "DATABASE_ERROR");
+  }
+}
+
+export async function archiveProduct(id: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('Product')
+    .update({ is_archived: true })
+    .eq('id', id);
+
+  if (error) {
+    console.error("Repository Error [archiveProduct]:", error);
+    throw new AppError("Failed to archive product", 500, "DATABASE_ERROR");
+  }
+}
+
+export async function unarchiveProduct(id: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('Product')
+    .update({ is_archived: false })
+    .eq('id', id);
+
+  if (error) {
+    console.error("Repository Error [unarchiveProduct]:", error);
+    throw new AppError("Failed to unarchive product", 500, "DATABASE_ERROR");
   }
 }

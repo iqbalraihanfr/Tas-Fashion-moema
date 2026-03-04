@@ -32,6 +32,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     dimensions: product.dimensions,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
+    is_archived: product.is_archived ?? false,
   };
 
   return (

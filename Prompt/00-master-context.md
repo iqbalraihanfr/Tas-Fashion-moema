@@ -5,7 +5,7 @@
 
 ---
 
-## Identitas Proyek
+## 1. IDENTITAS PROYEK
 
 | Key                   | Value                                                                                                                 |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -14,11 +14,15 @@
 | **Tipe Aplikasi**     | Full-stack Web App — Supabase sebagai database + Storage, custom admin panel di `/admin`                              |
 | **Target User**       | Pelanggan retail e-commerce premium & Admin platform                                                                  |
 | **Stage**             | MVP — Manajemen produk dengan kompresi gambar (WebP) & dashboard admin, public storefront                             |
-| **Pemilik**           | Iqbal Raihan                                                                                                          |
+| **Domain / URL**      | `[CUSTOMIZE]`                                                                                                         |
+| **Author**            | Iqbal Raihan                                                                                                          |
+| **Contact / Links**   | `[CUSTOMIZE]` — email, GitHub, LinkedIn, dll.                                                                         |
 
 ---
 
-## Tech Stack (CORE STACK)
+## 2. TECH STACK (CORE STACK)
+
+> **AI RULE:** Jangan tambahkan dependency baru tanpa diskusi eksplisit dengan developer.
 
 ```
 Frontend    : Next.js 16 (App Router) + TypeScript Strict Mode
@@ -32,11 +36,79 @@ Validation  : Zod + React Hook Form
 Testing     : Vitest + React Testing Library + Playwright (E2E)
 ```
 
-> ⚠️ Jangan tambahkan dependency baru tanpa diskusi (khususnya untuk state management).
+### Dependency Rules
+
+- ❌ Jangan tambah dependency baru tanpa diskusi
+- ❌ Jangan suggest migrasi database, auth, atau framework
+- ❌ Jangan buat folder top-level baru di luar yang sudah didefinisikan di `02-architecture-context.md`
+- ✅ Boleh suggest improvement dalam batasan stack yang sudah ada
 
 ---
 
-## Struktur Folder & Pola Architektur Aktual
+## 3. CONVENTIONS
+
+| Aspek                          | Aturan                                     | Contoh                                      |
+| ------------------------------ | ------------------------------------------ | ------------------------------------------- |
+| Code comments                  | `[CUSTOMIZE]` — EN / ID / bilingual        | `// Validate before save`                   |
+| Commit message                 | `[CUSTOMIZE]` — conventional commits, dll. | `feat(notes): add slug generation`          |
+| Branch naming                  | `[CUSTOMIZE]`                              | `feat/add-note-editor`, `fix/auth-redirect` |
+| Error messages (user-facing)   | `[CUSTOMIZE]` — EN / ID / bilingual        | `"Email tidak valid"`                       |
+| Error messages (developer/log) | `[CUSTOMIZE]`                              | `"Failed to fetch user"`                    |
+| Env variable naming            | SCREAMING_SNAKE_CASE                       | `DATABASE_URL`                              |
+
+> Untuk naming conventions kode (file, komponen, fungsi): lihat `02-architecture-context.md` Section Naming Conventions.
+
+---
+
+## 4. DECISIONS LOG
+
+> Catat keputusan arsitektur penting di sini.
+> Format: Keputusan → Alasan → Alternatif yang dipertimbangkan.
+> Ini bukan changelog — hanya keputusan yang **MENGAPA**, bukan APA.
+>
+> **AI RULE:** Jangan suggest perubahan yang bertentangan dengan keputusan di tabel ini tanpa konfirmasi eksplisit.
+
+| Keputusan     | Alasan        | Alternatif Ditolak |
+| ------------- | ------------- | ------------------ |
+| `[CUSTOMIZE]` | `[CUSTOMIZE]` | `[CUSTOMIZE]`      |
+
+---
+
+## 5. DATA FLOW
+
+> Gambarkan jalur data utama di aplikasi ini.
+> **AI RULE:** Gunakan pattern ini saat menentukan di mana logic harus ditaruh.
+
+### Read Path (user melihat data)
+
+```
+[CUSTOMIZE — contoh:]
+Server Component → service → query → DB → return ke component
+```
+
+### Write Path (user mengubah data)
+
+```
+[CUSTOMIZE — contoh:]
+Form submit → Server Action → schema validation → service → query → DB
+```
+
+### Auth Flow
+
+```
+[CUSTOMIZE — contoh:]
+Login form → auth provider → set session/cookie → redirect
+```
+
+> Detail implementasi per layer: lihat `02-architecture-context.md` Section Pola Per Layer.
+> Detail security & auth: lihat `03-security-context.md`.
+
+---
+
+## 6. STRUKTUR FOLDER & ARSITEKTUR AKTUAL
+
+> Update tree ini setiap kali ada perubahan struktur signifikan.
+> Untuk pattern dan aturan penempatan file: lihat `02-architecture-context.md`.
 
 ```
 app/
@@ -68,7 +140,7 @@ supabase/
 
 ---
 
-## Supabase Architecture & Storage
+## 7. SUPABASE ARCHITECTURE & STORAGE
 
 ### Schema Inti (Postgres)
 
@@ -82,7 +154,26 @@ Upload wajib di-compress ke WebP menggunakan `browser-image-compression` secara 
 
 ---
 
-## MASTER CODING CONVENTIONS (The "Murphy's Law" Protocol)
+## 8. DESIGN SYSTEM
+
+> Definisikan tokens utama di `globals.css` sebagai CSS custom properties.
+> Detail lengkap styling conventions: lihat `02-architecture-context.md` Section Tailwind Conventions.
+
+### Color Tokens
+
+| Token         | Value         | Usage         |
+| ------------- | ------------- | ------------- |
+| `[CUSTOMIZE]` | `[CUSTOMIZE]` | `[CUSTOMIZE]` |
+
+### Font Tokens
+
+| Tailwind Class | Font          | Usage                                          |
+| -------------- | ------------- | ---------------------------------------------- |
+| `[CUSTOMIZE]`  | `[CUSTOMIZE]` | `[CUSTOMIZE]` — heading / body / accent / mono |
+
+---
+
+## 9. MASTER CODING CONVENTIONS (The "Murphy's Law" Protocol)
 
 _Sebagai AI, kamu berperan sebagai Principal Software Architect & Engineering Lead._
 
@@ -109,25 +200,72 @@ _Sebagai AI, kamu berperan sebagai Principal Software Architect & Engineering Le
 
 ---
 
-## INSTRUCTION FOR AI RESPONSE (The Workflow)
+## 10. ENVIRONMENT & DEPLOYMENT
 
-Saat diminta tambahan fitur/solusi:
+### Environment Variables
 
-1. **Analyze:** Cek `00-master-context` (file ini) untuk batas tumpukan teknologi dan struktur.
-2. **Plan:** (Internal thought) Pikirkan integrasi design adaptive & logic yang efisien.
-3. **Execute:** Berikan **KODE LENGKAP**.
-   - ⚠️ DILARANG MENGGUNAKAN `// ... rest of the code`.
-   - ⚠️ DILARANG memberi basa-basi seperti "Here is the code" atau resume setelah kode selesai. Cukup berikan file path dan block kode!
-4. **Definition of Done (DoD):** Kode tanpa bug TS, styling sesuai komponen Shadcn yang ada, logic ter-handle.
+> **AI RULE:** Jangan hardcode value. Jangan invent env var baru tanpa menambahkannya di sini dan di `.env.example`.
+
+| Variable      | Scope           | Deskripsi     |
+| ------------- | --------------- | ------------- |
+| `[CUSTOMIZE]` | server / client | `[CUSTOMIZE]` |
+
+> **Konvensi:**
+>
+> - Client-accessible: prefix `NEXT_PUBLIC_`
+> - Server-only: tanpa prefix — JANGAN expose ke client
+> - Semua env var harus terdaftar di tabel ini dan di `.env.example`
+
+### Deployment
+
+| Key                     | Value               |
+| ----------------------- | ------------------- |
+| **Platform**            | Vercel              |
+| **Branch strategy**     | `main` = production |
+| **Build command**       | `npm run build`     |
+| **Preview URL pattern** | `[CUSTOMIZE]`       |
+
+> Detail CI/CD pipeline: lihat `08-devops-context.md`.
 
 ---
 
-## Cara Bekerja dengan Master Prompt Ini
+## 11. STRUKTUR CONTEXT FILES
+
+> **AI RULE:** Ketika kamu menemukan topik yang overlap dengan context file lain,
+> sebutkan file mana yang harus dibaca untuk detail lengkap.
+> Jangan assume informasi di satu file sudah cukup jika tabel di bawah menunjukkan
+> ada file lain yang lebih spesifik untuk topik tersebut.
+
+| File                         | Scope                                     | Baca Saat                       |
+| ---------------------------- | ----------------------------------------- | ------------------------------- |
+| `00-master-context.md`       | Overview, data flow, identity             | Selalu, di awal — **wajib**     |
+| `01-product-context.md`      | Halaman, fitur, content structure         | Saat tambah halaman/fitur baru  |
+| `02-architecture-context.md` | Folder structure, pola kode, import rules | Saat buat/edit file apapun      |
+| `03-security-context.md`     | Auth, authorization, data protection      | Saat edit auth/middleware/role  |
+| `04-sre-perf-context.md`     | Caching, performance, monitoring          | Saat optimasi performa          |
+| `05-testing-qa-context.md`   | Test strategy, coverage, CI               | Saat menulis/review test        |
+| `06-seo-tech-context.md`     | Metadata, sitemap, structured data        | Saat edit metadata/SEO          |
+| `07-content-context.md`      | Copywriting, tone, voice                  | Saat tulis/edit copy UI         |
+| `08-devops-context.md`       | CI/CD, env management, deployment         | Saat deploy atau setup pipeline |
+
+---
+
+## 12. INSTRUCTION FOR AI RESPONSE (The Workflow)
+
+Saat diminta tambahan fitur/solusi:
+
+1. **Analyze:** Cek `00-master-context.md` (file ini) untuk batas tumpukan teknologi dan struktur. Pahami juga context files lain yang sesuai scope jika diperlukan.
+2. **Plan:** (Internal thought) Pikirkan integrasi design adaptive & logic yang efisien. Ikuti data flow dari section "DATA FLOW" di `00-master-context.md`.
+3. **Execute:** Berikan **KODE LENGKAP**.
+   - ⚠️ DILARANG MENGGUNAKAN `// ... rest of the code`.
+   - ⚠️ DILARANG memberi basa-basi seperti "Here is the code" atau resume setelah kode selesai. Cukup berikan file path dan block kode!
+4. **Definition of Done (DoD):** Kode tanpa bug TS, styling sesuai komponen (Shadcn/UI), logic ter-handle, environment termanage, aman, testable.
 
 ### Setup prompt yang efektif:
 
 ```
 Baca 00-master-context.md.
+[Tambahkan context file yang relevan — lihat tabel di Section 11]
 [Tambahkan konteks/file yang akan diubah]
 Tugas: Buatkan komponen X dengan spesifikasi Y.
 ```

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ProductDetailClient } from "@/components/product/product-detail-client";
 import Link from "next/link";
-import { getProductBySlug } from "@/services/database/product.repository";
+import { getProductBySlug, getRecommendedProducts } from "@/services/database/product.repository";
 import { Metadata } from "next";
 
 type Props = {
@@ -27,7 +27,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const [product, recommendedProducts] = await Promise.all([
+    getProductBySlug(slug),
+    getRecommendedProducts(slug, 8),
+  ]);
 
   if (!product) {
     notFound();
@@ -70,7 +73,7 @@ export default async function ProductDetailPage({ params }: Props) {
         <span className="text-foreground font-bold">{product.name}</span>
       </div>
 
-      <ProductDetailClient product={product} />
+      <ProductDetailClient product={product} recommendedProducts={recommendedProducts} />
     </div>
   );
 }

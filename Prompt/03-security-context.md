@@ -1,10 +1,11 @@
 # 03 · SECURITY CONTEXT
-> Baca saat: membuat API route, Server Action, form input, auth flow, atau fitur yang melibatkan data sensitif.
+
+> **Baca saat:** membuat API route, Server Action, form input, auth flow, atau fitur yang melibatkan data sensitif.
 > Security bukan fitur tambahan — ini built-in dari awal.
 
 ---
 
-## Prinsip Keamanan
+## 1. PRINSIP KEAMANAN
 
 1. **Never trust the client** — selalu validasi ulang di server, tidak peduli validasi di frontend
 2. **Least privilege** — setiap user hanya punya akses ke apa yang mereka butuhkan
@@ -14,335 +15,340 @@
 
 ---
 
-## Authentication — Better Auth
+## 2. AUTHENTICATION
 
-### Config
+> **AI RULE:** Auth pattern di bawah ini adalah referensi implementasi.
+> Project ini menggunakan **NextAuth.js v5 Beta** dan Supabase (bukan Prisma).
+> Pattern implementasi middleware: lihat `02-architecture-context.md` Section Auth & Role Pattern.
+
+### Pattern Wajib (berlaku di semua auth library)
+
+1. **Session check di server** — jangan pernah trust client-side auth state saja
+2. **Helper functions** — panggil auth logic melalui library wrapper resmi (`auth()`)
+3. **Fail secure** — kalau session check gagal, default ke "tidak punya akses"
+4. **Session expiry** — selalu set expiration (default NextAuth), jangan biarkan session hidup selamanya
+5. **Rate limit auth endpoints** — login dan manipulasi data wajib dibatasi.
+
+### Referensi Implementasi: NextAuth.js + Credentials
+
 ```typescript
-// lib/auth.ts
-import { betterAuth } from 'better-auth'
-import { prismaAdapter } from 'better-auth/adapters/prisma'
-import { db } from './db'
+// auth.ts
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
+import Credentials from "next-auth/providers/credentials";
+import { compare } from "bcryptjs";
+import { z } from "zod";
+import { supabaseAdmin } from "@/lib/supabase";
 
-export const auth = betterAuth({
-  database: prismaAdapter(db, { provider: 'postgresql' }),
+async function getUser(email: string) {
+  const { data, error } = await supabaseAdmin
+    .from("AdminUser")
+    .select("*")
+    .eq("email", email)
+    .single();
+  if (error) return null;
+  return data;
+}
 
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: true,       // wajib verifikasi email
-    minPasswordLength: 8,
-  },
+export const { auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  providers: [
+    Credentials({
+      async authorize(credentials) {
+        const parsedCredentials = z
+          .object({ email: z.string().email(), password: z.string().min(6) })
+          .safeParse(credentials);
 
-  socialProviders: {
-    google: {
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    },
-  },
+        if (parsedCredentials.success) {
+          const { email, password } = parsedCredentials.data;
+          const user = await getUser(email);
+          if (!user) return null;
 
-  session: {
-    expiresIn: 60 * 60 * 24 * 7,         // 7 hari
-    updateAge: 60 * 60 * 24,             // refresh setiap 24 jam
-    cookieCache: { enabled: true, maxAge: 60 * 5 },
-  },
-
-  rateLimit: {
-    enabled: true,
-    window: 60,                          // 60 detik
-    max: 10,                             // max 10 request login per window
-  },
-})
-
-export type Session = typeof auth.$Infer.Session
+          const passwordsMatch = await compare(password, user.passwordHash);
+          if (passwordsMatch) return user;
+        }
+        return null;
+      },
+    }),
+  ],
+});
 ```
 
 ### Helper: Get Session di Server
+
 ```typescript
-// lib/auth.ts (tambahan)
-import { headers } from 'next/headers'
+// Di mana saja di Server Component atau Server Action
+import { auth } from "@/auth";
 
 export async function getSession() {
-  return auth.api.getSession({ headers: await headers() })
+  return await auth();
 }
 
 export async function requireAuth() {
-  const session = await getSession()
-  if (!session) throw new Error('UNAUTHORIZED')
-  return session
-}
-
-export async function requireRole(role: 'admin' | 'user') {
-  const session = await requireAuth()
-  if (session.user.role !== role) throw new Error('FORBIDDEN')
-  return session
+  const session = await getSession();
+  if (!session?.user) throw new Error("UNAUTHORIZED");
+  return session;
 }
 ```
 
 ---
 
-## Authorization — Role-Based Access Control (RBAC)
+## 3. AUTHORIZATION — ROLE-BASED ACCESS CONTROL (RBAC)
+
+> Daftar roles dan permissions: Saat ini hanya ada 1 level otorisasi, yaitu **Admin**.
 
 ### Middleware (Route Protection)
+
 ```typescript
 // middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
 
-const PUBLIC_ROUTES = ['/', '/login', '/register', '/api/auth']
-const ADMIN_ROUTES = ['/admin']
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // Skip auth check untuk public routes
-  if (PUBLIC_ROUTES.some(r => pathname.startsWith(r))) {
-    return NextResponse.next()
-  }
-
-  // Cek session dari cookie
-  const sessionCookie = request.cookies.get('better-auth.session_token')
-  if (!sessionCookie) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  // Cek admin routes
-  if (ADMIN_ROUTES.some(r => pathname.startsWith(r))) {
-    // Verifikasi role — lakukan di Server Component untuk detail
-    // Di middleware hanya cek kehadiran session
-  }
-
-  return NextResponse.next()
-}
+export default NextAuth(authConfig).auth;
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
-}
+  matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
+};
+```
+
+```typescript
+// auth.config.ts — NextAuth Middleware Logic
+export const authConfig = {
+  pages: { signIn: "/admin/login" },
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isAdminRoute = nextUrl.pathname.startsWith("/admin/dashboard");
+      const isAuthRoute = nextUrl.pathname.startsWith("/admin/login");
+
+      if (isAdminRoute) {
+        if (isLoggedIn) return true;
+        return false; // Redirect ke /admin/login
+      } else if (isAuthRoute) {
+        if (isLoggedIn) {
+          return Response.redirect(new URL("/admin/dashboard", nextUrl));
+        }
+        return true;
+      }
+      return true;
+    },
+    // ... Session / JWT callback
+  },
+  providers: [],
+};
 ```
 
 ### Permission Check di Server Action
+
 ```typescript
+// lib/admin-actions.ts
 // Selalu check permission di Server Action, bukan hanya di middleware
 export async function deleteProductAction(id: string) {
-  // 1. Cek auth
-  const session = await requireAuth()
+  // 1. Cek auth wajib di awal
+  const session = await requireAuth();
 
-  // 2. Cek role
-  if (session.user.role !== 'admin') {
-    return { error: 'Tidak punya izin untuk menghapus produk' }
-  }
+  // 2. Filter input/ownership
+  if (!id) return { error: "Product ID is missing." };
 
-  // 3. Cek ownership (kalau relevan)
-  const product = await productQueries.findById(id)
-  if (!product) return { error: 'Produk tidak ditemukan' }
-
-  // 4. Baru eksekusi
-  await productService.delete(id)
-  revalidatePath('/products')
-  return { success: true }
+  // 3. Baru eksekusi
+  await productService.delete(id);
+  revalidatePath("/admin/dashboard/products");
+  return { success: true };
 }
 ```
 
 ---
 
-## Input Validation — Zod
+## 4. INPUT VALIDATION — ZOD
+
+> Schema patterns dan layer rules: lihat `02-architecture-context.md` Section Pola Per Layer (Layer 1: Schema).
 
 ### Aturan Validasi
+
 ```typescript
 // Selalu gunakan .safeParse(), bukan .parse()
 // .parse() throw error; .safeParse() return { success, data, error }
 
 // ✅ Benar
-const parsed = schema.safeParse(input)
-if (!parsed.success) return { error: parsed.error.flatten() }
-const safeData = parsed.data // TypeScript tahu ini sudah valid
+const parsed = productSchema.safeParse(formDataObj);
+if (!parsed.success) return { error: parsed.error.issues[0].message };
+const safeData = parsed.data;
 
 // ❌ Salah — error tidak tertangkap dengan baik
-const data = schema.parse(input) // bisa throw unhandled exception
+const data = productSchema.parse(formDataObj); // bisa throw unhandled exception
 ```
 
 ### Schema Patterns Penting
+
 ```typescript
-import { z } from 'zod'
+import { z } from "zod";
 
 // String sanitization
-const nameSchema = z.string()
-  .min(1, 'Tidak boleh kosong')
-  .max(100, 'Maksimal 100 karakter')
-  .trim()                              // hapus whitespace
-  .regex(/^[a-zA-Z\s]+$/, 'Hanya huruf dan spasi')
+const nameSchema = z
+  .string()
+  .min(1, "Tidak boleh kosong")
+  .max(100, "Maksimal 100 karakter")
+  .trim();
 
-// ID validation (hindari SQL injection via ID manipulation)
-const idSchema = z.string().cuid2()   // atau .uuid()
+// ID validation (Supabase standard ID)
+const idSchema = z.string().uuid(); // Bila pakai UUID, else sesuaikan.
 
-// File upload validation
-const fileSchema = z.object({
-  size: z.number().max(5 * 1024 * 1024, 'Maksimal 5MB'),
-  type: z.enum(['image/jpeg', 'image/png', 'image/webp']),
-})
+// File upload validation (Multipart FormData / Images)
+const fileSchema = z
+  .array(z.instanceof(File))
+  .refine(
+    (files) => files.every((file) => file.size < 5 * 1024 * 1024),
+    "File must be under 5MB",
+  );
 
-// Pagination (hindari abuse)
-const paginationSchema = z.object({
-  page: z.number().int().min(1).max(1000).default(1),
-  limit: z.number().int().min(1).max(100).default(20),
-})
+// Form data number preprocess pattern
+const stockSchema = z.preprocess(
+  (a) => parseInt(z.string().parse(a), 10),
+  z.number().int().nonnegative("Stock cannot be negative"),
+);
 ```
 
 ---
 
-## OWASP Top 10 — Mitigasi per Issue
+## 5. ERROR MESSAGE SECURITY
 
-### 1. Broken Access Control
-```typescript
-// ❌ Salah: hanya cek login, tidak cek ownership
-const product = await db.product.findUnique({ where: { id } })
+> **AI RULE:** Error messages yang dikirim ke client TIDAK BOLEH mengekspos detail internal (Supabase details, PG errors).
 
-// ✅ Benar: cek login DAN ownership
-const product = await db.product.findUnique({
-  where: { id, userId: session.user.id }  // user hanya bisa akses miliknya
-})
-```
+### Aturan
 
-### 2. Injection (SQL, XSS)
-```typescript
-// SQL Injection: Prisma otomatis parameterized queries — aman
-// Tapi hindari queryRaw dengan string interpolation:
+| Situasi            | ❌ Jangan                                            | ✅ Gunakan                                  |
+| ------------------ | ---------------------------------------------------- | ------------------------------------------- |
+| Login gagal        | "Email tidak ditemukan" / "Password salah"           | "Email atau password salah"                 |
+| Register duplicate | "Email sudah terdaftar"                              | "Tidak dapat membuat akun. Coba email lain" |
+| Resource not found | "Product with ID abc123 not found in table products" | "Data tidak ditemukan"                      |
+| Server error       | Stack trace / SQL error                              | "Terjadi kesalahan. Coba lagi nanti"        |
+| Permission denied  | "User role 'user' cannot access admin panel"         | "Tidak punya akses"                         |
 
-// ❌ Salah
-await db.$queryRaw`SELECT * FROM users WHERE email = '${email}'`
-
-// ✅ Benar
-await db.$queryRaw`SELECT * FROM users WHERE email = ${email}` // Prisma handle escaping
-// atau gunakan queryRawUnsafe hanya jika benar-benar perlu, dengan sanitasi manual
-
-// XSS: React otomatis escape JSX — aman
-// Tapi hati-hati dengan dangerouslySetInnerHTML:
-// ❌ Jangan pernah render HTML dari user input tanpa sanitasi
-<div dangerouslySetInnerHTML={{ __html: userContent }} />
-
-// ✅ Gunakan library sanitizer
-import DOMPurify from 'dompurify'
-<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userContent) }} />
-```
-
-### 3. Sensitive Data Exposure
-```typescript
-// ❌ Jangan return field sensitif ke client
-const user = await db.user.findUnique({ where: { id } })
-return user // includes passwordHash, resetToken, dll.!
-
-// ✅ Select hanya field yang diperlukan
-const user = await db.user.findUnique({
-  where: { id },
-  select: { id: true, name: true, email: true, role: true }
-})
-```
-
-### 4. CSRF
-```
-Server Actions Next.js sudah include CSRF protection built-in.
-Untuk API routes yang menerima state-changing requests:
-- Gunakan SameSite cookie
-- Validasi Origin header
-- Better Auth handle ini secara otomatis
-```
-
-### 5. Security Headers
-```typescript
-// next.config.ts
-const securityHeaders = [
-  { key: 'X-DNS-Prefetch-Control', value: 'on' },
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
-  {
-    key: 'Content-Security-Policy',
-    value: [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // sesuaikan
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https:",
-    ].join('; ')
-  },
-]
-```
-
----
-
-## Environment Variables — Secrets Management
+### Pattern di Action Layer
 
 ```typescript
-// lib/env.ts — validasi semua env vars di sini
-import { createEnv } from '@t3-oss/env-nextjs'
-import { z } from 'zod'
+try {
+  const result = await productService.createProduct(parsed.data);
+  return { data: result };
+} catch (err) {
+  // Log detail lengkap untuk debugging (server-side only)
+  console.error("[CreateProductAction]", err);
 
-export const env = createEnv({
-  server: {
-    DATABASE_URL: z.string().url(),
-    AUTH_SECRET: z.string().min(32),         // openssl rand -base64 32
-    GOOGLE_CLIENT_ID: z.string().optional(),
-    GOOGLE_CLIENT_SECRET: z.string().optional(),
-    UPSTASH_REDIS_URL: z.string().url().optional(),
-  },
-  client: {
-    NEXT_PUBLIC_APP_URL: z.string().url(),
-  },
-  runtimeEnv: {
-    DATABASE_URL: process.env.DATABASE_URL,
-    AUTH_SECRET: process.env.AUTH_SECRET,
-    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    UPSTASH_REDIS_URL: process.env.UPSTASH_REDIS_URL,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  },
-})
-```
-
-**Aturan secrets**:
-- Tidak pernah commit `.env` (ada di `.gitignore`)
-- Tidak pernah log secrets ke console
-- Secrets disimpan di Vercel Environment Variables / vault
-- Rotasi secrets secara berkala
-- `NEXT_PUBLIC_` prefix hanya untuk yang benar-benar perlu di client (non-secret)
-
----
-
-## Rate Limiting
-
-```typescript
-// lib/rate-limit.ts
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis } from '@upstash/redis'
-
-export const rateLimiter = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, '60 s'),
-  prefix: 'app:ratelimit',
-})
-
-// Gunakan di Server Action atau API Route
-export async function sensitiveAction() {
-  const ip = headers().get('x-forwarded-for') ?? 'unknown'
-  const { success } = await rateLimiter.limit(ip)
-
-  if (!success) {
-    return { error: 'Terlalu banyak request. Coba lagi nanti.' }
-  }
-
-  // ... lanjutkan
+  // Return pesan generik ke client
+  return {
+    error: "Terjadi kesalahan saat menambahkan produk. Coba lagi nanti.",
+  };
 }
 ```
 
 ---
 
-## Checklist Security Review
+## 6. OWASP TOP 10 — MITIGASI
 
-Sebelum merge PR yang menyentuh auth/data sensitif:
+### 1. Broken Access Control
 
-- [ ] Semua input divalidasi dengan Zod di server
-- [ ] Auth check ada di setiap Server Action yang butuh login
-- [ ] Role check ada untuk aksi yang butuh permission khusus
-- [ ] Ownership check ada (user tidak bisa akses data user lain)
-- [ ] Field sensitif tidak dikirim ke client
-- [ ] Tidak ada secret di client-side code
-- [ ] Rate limiting ada untuk endpoint sensitif
-- [ ] Error message tidak expose internal detail ke user
+**Aturan:** Middleware membatasi visual route. Server Action membatasi API mutasi. Keduanya wajib dipakai bersamaan. Jangan pernah berasumsi aksi mutasi aman hanya karena letak UI-nya ada di `/admin`.
+
+### 2. Injection (SQL, XSS)
+
+**Aturan:** Supabase SDK sudah menggunakan Parameterized Query dalam method `select()`, `insert()`, dll.
+
+- ❌ Jangan pernah merajut command lewat RPC function raw dengan string literal.
+- ❌ Jangan pakai `dangerouslySetInnerHTML` di front-end Next.js dengan output String yang dibuat / dikirim admin jika tidak disanitize (contohnya form Rich Text editor produk). Pakai sanitize library!
+
+### 3. Sensitive Data Exposure
+
+**Aturan:** Jangan pernah return seluruh row auth/password ke client.
+
+```typescript
+// ❌ Salah
+const { data } = await supabaseAdmin.from("AdminUser").select("*"); // Exposes passwordHash!
+
+// ✅ Benar
+const { data } = await supabaseAdmin
+  .from("AdminUser")
+  .select("id, email, created_at");
+```
+
+### 4. CSRF
+
+```
+Server Actions Next.js sudah include CSRF protection built-in menggunakan Origin Headers check.
+NextAuth versi terbaru (Auth.js) juga otomatis menangani cookie csrf.
+```
+
+### 5. Security Headers
+
+```typescript
+// next.config.ts
+// Tambahkan header berikut untuk pengamanan frame (mencegah Clickjacking dan sniffing tipe konten)
+
+const securityHeaders = [
+  { key: "X-DNS-Prefetch-Control", value: "on" },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
+  },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "origin-when-cross-origin" },
+];
+
+export default {
+  async headers() {
+    return [{ source: "/(.*)", headers: securityHeaders }];
+  },
+};
+```
+
+---
+
+## 7. ENVIRONMENT VARIABLES — SECRETS MANAGEMENT
+
+> Daftar env vars aktual project: lihat `00-master-context.md` Section Environment & Deployment.
+
+**Aturan secrets:**
+
+- ❌ Tidak pernah commit `.env` (ada di `.gitignore`)
+- ❌ Tidak pernah log secrets ke console (e.g., Supabase Service Role Key)
+- ❌ `NEXT_PUBLIC_` prefix hanya untuk yang benar-benar public. Contoh: `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- ✅ Secrets utama seperti `AUTH_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` haram dideklarasi pakai prefix client-side.
+- ✅ Pastikan koneksi Supabase di Admin / Mutator (`lib/supabase.ts`) tidak bocor ke komponen browser.
+
+---
+
+## 8. SECURITY RULES PER LAYER
+
+> **AI RULE:** Terapkan rules ini SETIAP KALI menulis kode di layer yang bersangkutan.
+> Ini bukan opsional — ini wajib.
+
+### Schema Layer (`schemas.ts` / Zod Form)
+
+- ✅ Semua input dari user WAJIB punya Zod schema
+- ✅ String: selalu `.trim()`, selalu `.max()` — tidak ada string tanpa batas panjang
+- ✅ Validasi Number dari input Form via `.preprocess` (casting String->Number) dengan batas negatifnya.
+- ❌ Jangan pernah pakai `.parse()` — selalu `.safeParse()`
+
+### Database Layer (`supabase.ts`, Backend Queries)
+
+- ✅ Jangan membocorkan Service Role Key ke Public Client (`createClientComponentClient`). Supabase Admin Client **KHUSUS** dilinting dan dipanggil hanya di API / Server Actions.
+- ✅ Jangan Select colum passwordHash apalagi return object raw hasil `auth.user()` mentah.
+
+### Action Layer (`actions.ts` / `admin-actions.ts`)
+
+- ✅ SETIAP action mutasi admin: Lakukan RequireAuth NextAuth.
+- ✅ Tangkap segala error internal dengan try/catch dan bungkus dengan `{error: 'Pesan Ringkas'}`
+- ❌ DILARANG Return error stack trace Postgres Supabase ke UI Form Response.
+
+---
+
+## 9. CHECKLIST SECURITY REVIEW
+
+> Gunakan checklist ini sebelum merge PR/commit yang menyentuh auth/data sensitif MOEMA.
+
+- [ ] Semua input (Produk, Image, Auth) divalidasi dengan Zod di server (`.safeParse()`)
+- [ ] Auth session check ada di setiap Server Action mutasi produk.
+- [ ] Field sensitif (`passwordHash`) tidak dikirim ke client (gunakan spesifik argument string `select`).
+- [ ] `NEXT_PUBLIC_` hanya di sematkan pada Anonymous DB key, bukan Master token.
+- [ ] Error message tidak mengekspos internal DB Error Detail ke User saat terjadi fail update product.
+- [ ] Gambar dikonversi ke WebP dan dibatasi maksimal sizenya.

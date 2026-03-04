@@ -164,6 +164,46 @@ export async function deleteProduct(prevState: unknown, formData: FormData) {
   return { success: true };
 }
 
+export async function archiveProduct(prevState: unknown, formData: FormData) {
+  const id = formData.get("productId") as string;
+
+  if (!id) {
+    return { error: "Product ID is missing." };
+  }
+
+  try {
+    await productService.archiveProduct(id);
+  } catch (error) {
+    console.error(error);
+    return { error: "Failed to archive product." };
+  }
+
+  revalidatePath('/admin/dashboard/products');
+  revalidatePath('/catalog');
+  revalidatePath('/');
+  return { success: true };
+}
+
+export async function unarchiveProduct(prevState: unknown, formData: FormData) {
+  const id = formData.get("productId") as string;
+
+  if (!id) {
+    return { error: "Product ID is missing." };
+  }
+
+  try {
+    await productService.unarchiveProduct(id);
+  } catch (error) {
+    console.error(error);
+    return { error: "Failed to unarchive product." };
+  }
+
+  revalidatePath('/admin/dashboard/products');
+  revalidatePath('/catalog');
+  revalidatePath('/');
+  return { success: true };
+}
+
 export async function updateOrderStatus(formData: FormData) {
   const orderId = formData.get("orderId") as string;
   const paymentStatus = formData.get("paymentStatus") as string;

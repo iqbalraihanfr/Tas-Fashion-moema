@@ -48,7 +48,7 @@ describe('Product Service Integration Tests', () => {
       const result = await productService.createProduct(mockInput);
 
       // Assert
-      expect(storageService.uploadProductImages).toHaveBeenCalledWith([mockFile]);
+      expect(storageService.uploadProductImages).toHaveBeenCalledWith([mockFile], mockInput.baseName, mockInput.color);
       expect(productRepo.createProduct).toHaveBeenCalledWith({
         name: mockInput.name,
         baseName: mockInput.baseName,
@@ -59,7 +59,8 @@ describe('Product Service Integration Tests', () => {
         description: mockInput.description,
         price: mockInput.price,
         stock: mockInput.stock,
-        images: mockImageUrls
+        images: mockImageUrls,
+        is_archived: false
       });
       expect(result).toEqual(mockCreatedProduct);
     });
@@ -94,7 +95,8 @@ describe('Product Service Integration Tests', () => {
         slug: 'old-slug',
         images: ['old-img-1.jpg', 'old-img-2.jpg'],
         createdAt: 'date',
-        updatedAt: 'date'
+        updatedAt: 'date',
+        is_archived: false
     };
 
     it('should throw error if product not found', async () => {
@@ -125,7 +127,7 @@ describe('Product Service Integration Tests', () => {
         expect(storageService.deleteProductImages).toHaveBeenCalledWith(['old-img-2.jpg']);
         
         // 2. Check upload of new image
-        expect(storageService.uploadProductImages).toHaveBeenCalledWith([mockFile]);
+        expect(storageService.uploadProductImages).toHaveBeenCalledWith([mockFile], existingProduct.baseName, existingProduct.color, 1);
 
         // 3. Check DB update with merged images
         expect(productRepo.updateProduct).toHaveBeenCalledWith('prod-1', expect.objectContaining({

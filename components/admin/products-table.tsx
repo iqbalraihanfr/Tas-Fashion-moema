@@ -15,36 +15,47 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import Image from "next/image";
 import { DeleteProductButton } from "@/components/admin/delete-product-button";
-import { Search, X, Package, SlidersHorizontal } from "lucide-react";
+import { ArchiveProductButton } from "@/components/admin/archive-product-button";
+import { Search, X, Package, SlidersHorizontal, Archive } from "lucide-react";
 import type { Product } from "@/lib/types";
 
 interface ProductsTableProps {
   products: Product[];
 }
 
+type TabView = "active" | "archived";
+
 export function ProductsTable({ products }: ProductsTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterColor, setFilterColor] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabView>("active");
 
   // Debounce search query to avoid excessive re-computation
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  // Extract unique colors for filter dropdown
+  // Split products by archive status
+  const activeProducts = useMemo(() => products.filter((p) => !p.is_archived), [products]);
+  const archivedProducts = useMemo(() => products.filter((p) => p.is_archived), [products]);
+
+  // Current tab products
+  const currentProducts = activeTab === "active" ? activeProducts : archivedProducts;
+
+  // Extract unique colors for filter dropdown (from current tab)
   const uniqueColors = useMemo(() => {
-    const colors = new Set(products.map((p) => p.color).filter(Boolean));
+    const colors = new Set(currentProducts.map((p) => p.color).filter(Boolean));
     return Array.from(colors).sort();
-  }, [products]);
+  }, [currentProducts]);
 
   // Extract unique base names for stats
   const uniqueModels = useMemo(() => {
-    const models = new Set(products.map((p) => p.baseName).filter(Boolean));
+    const models = new Set(currentProducts.map((p) => p.baseName).filter(Boolean));
     return models.size;
-  }, [products]);
+  }, [currentProducts]);
 
   // Filter products based on debounced search and filters
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
+    return currentProducts.filter((product) => {
       const query = debouncedSearch.toLowerCase().trim();
 
       // Search across multiple fields
@@ -61,7 +72,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
 
       return matchesSearch && matchesColor;
     });
-  }, [products, debouncedSearch, filterColor]);
+  }, [currentProducts, debouncedSearch, filterColor]);
 
   const totalStock = filteredProducts.reduce((sum, p) => sum + p.stock, 0);
 
@@ -78,9 +89,9 @@ export function ProductsTable({ products }: ProductsTableProps) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-background border border-border p-4">
           <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-            Total Products
+            {activeTab === "active" ? "Active Products" : "Archived Products"}
           </p>
-          <p className="text-2xl font-bold mt-1">{products.length}</p>
+          <p className="text-2xl font-bold mt-1">{currentProducts.length}</p>
         </div>
         <div className="bg-background border border-border p-4">
           <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
@@ -100,6 +111,43 @@ export function ProductsTable({ products }: ProductsTableProps) {
           </p>
           <p className="text-2xl font-bold mt-1">{totalStock}</p>
         </div>
+      </div>
+
+      {/* Tab Switcher */}
+      <div className="flex border-b border-border">
+        <button
+          onClick={() => { setActiveTab("active"); clearFilters(); }}
+          className={`px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] font-bold transition-colors relative ${
+            activeTab === "active"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Active
+          <span className="ml-1.5 text-[9px] font-medium px-1.5 py-0.5 bg-muted rounded-sm">
+            {activeProducts.length}
+          </span>
+          {activeTab === "active" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+          )}
+        </button>
+        <button
+          onClick={() => { setActiveTab("archived"); clearFilters(); }}
+          className={`px-4 py-2.5 text-[10px] uppercase tracking-[0.2em] font-bold transition-colors relative flex items-center gap-1.5 ${
+            activeTab === "archived"
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Archive className="h-3 w-3" />
+          Archived
+          <span className="ml-1 text-[9px] font-medium px-1.5 py-0.5 bg-muted rounded-sm">
+            {archivedProducts.length}
+          </span>
+          {activeTab === "archived" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+          )}
+        </button>
       </div>
 
       {/* Search & Filter Bar */}
@@ -178,7 +226,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
               <span className="font-bold text-foreground">
                 {filteredProducts.length}
               </span>{" "}
-              of {products.length} products
+              of {currentProducts.length} {activeTab === "active" ? "products" : "archived"}
             </p>
             {hasActiveFilters && (
               <button
@@ -226,19 +274,30 @@ export function ProductsTable({ products }: ProductsTableProps) {
               <TableRow>
                 <TableCell colSpan={7} className="h-32 text-center">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <Package className="h-8 w-8 opacity-40" />
+                    {activeTab === "archived" ? (
+                      <Archive className="h-8 w-8 opacity-40" />
+                    ) : (
+                      <Package className="h-8 w-8 opacity-40" />
+                    )}
                     <p className="text-[10px] uppercase tracking-widest font-bold">
-                      No products found
+                      {activeTab === "archived"
+                        ? "No archived products"
+                        : "No products found"}
                     </p>
                     <p className="text-xs text-muted-foreground/70">
-                      Try adjusting your search or filters
+                      {activeTab === "archived"
+                        ? "Archived products will appear here"
+                        : "Try adjusting your search or filters"}
                     </p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
               filteredProducts.map((product) => (
-                <TableRow key={product.id} className="group">
+                <TableRow
+                  key={product.id}
+                  className={`group ${product.is_archived ? "opacity-60" : ""}`}
+                >
                   <TableCell className="py-2">
                     <div className="relative w-[50px] h-[50px] bg-muted overflow-hidden">
                       <Image
@@ -293,19 +352,35 @@ export function ProductsTable({ products }: ProductsTableProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="rounded-none h-8 text-[10px] uppercase tracking-widest"
-                      >
-                        <Link
-                          href={`/admin/dashboard/products/${product.id}/edit`}
-                        >
-                          Edit
-                        </Link>
-                      </Button>
-                      <DeleteProductButton productId={product.id} />
+                      {activeTab === "active" ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="rounded-none h-8 text-[10px] uppercase tracking-widest"
+                          >
+                            <Link
+                              href={`/admin/dashboard/products/${product.id}/edit`}
+                            >
+                              Edit
+                            </Link>
+                          </Button>
+                          <ArchiveProductButton
+                            productId={product.id}
+                            isArchived={false}
+                          />
+                          <DeleteProductButton productId={product.id} />
+                        </>
+                      ) : (
+                        <>
+                          <ArchiveProductButton
+                            productId={product.id}
+                            isArchived={true}
+                          />
+                          <DeleteProductButton productId={product.id} />
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
