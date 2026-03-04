@@ -21,7 +21,6 @@ describe('Product Service Integration Tests', () => {
     price: 1500000,
     stock: 10,
     images: [mockFile],
-    slug: 'joanna-gray-tote'
   };
 
   beforeEach(() => {
@@ -52,7 +51,7 @@ describe('Product Service Integration Tests', () => {
       expect(productRepo.createProduct).toHaveBeenCalledWith({
         name: mockInput.name,
         baseName: mockInput.baseName,
-        slug: mockInput.slug,
+        slug: 'joanna-gray-tote', // auto-generated from name
         sku: mockInput.sku,
         color: mockInput.color,
         dimensions: mockInput.dimensions,
@@ -65,14 +64,13 @@ describe('Product Service Integration Tests', () => {
       expect(result).toEqual(mockCreatedProduct);
     });
 
-    it('should auto-generate slug if not provided', async () => {
+    it('should always auto-generate slug from name', async () => {
         // Arrange
-        const inputWithoutSlug = { ...mockInput, slug: undefined };
         vi.mocked(storageService.uploadProductImages).mockResolvedValue([]);
         vi.mocked(productRepo.createProduct).mockResolvedValue({} as ReturnType<typeof productRepo.createProduct> extends Promise<infer T> ? T : never);
   
         // Act
-        await productService.createProduct(inputWithoutSlug);
+        await productService.createProduct(mockInput);
   
         // Assert
         expect(productRepo.createProduct).toHaveBeenCalledWith(expect.objectContaining({

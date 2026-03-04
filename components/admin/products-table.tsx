@@ -16,7 +16,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { ArchiveProductButton } from "@/components/admin/archive-product-button";
-import { Search, X, Package, SlidersHorizontal, Archive, Pencil } from "lucide-react";
+import { Search, X, Package, SlidersHorizontal, Archive, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -38,7 +38,11 @@ export function ProductsTable({ products }: ProductsTableProps) {
   const [activeTab, setActiveTab] = useState<TabView>("active");
   const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
@@ -75,11 +79,21 @@ export function ProductsTable({ products }: ProductsTableProps) {
     });
   }, [currentProducts, debouncedSearch, filterColor]);
 
+  // Reset page when filters change
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedProducts = useMemo(() => {
+    const start = (safeCurrentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, safeCurrentPage, itemsPerPage]);
+
   const totalStock = filteredProducts.reduce((sum, p) => sum + p.stock, 0);
 
   const clearFilters = () => {
     setSearchQuery("");
     setFilterColor("");
+    setCurrentPage(1);
   };
 
   const hasActiveFilters = searchQuery || filterColor;
@@ -95,6 +109,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
     setTimeout(() => {
       setActiveTab(newTab);
       clearFilters();
+      setCurrentPage(1);
       setSlideDirection(direction === "left" ? "right" : "left");
       
       // After content switch, slide in from opposite side
@@ -200,12 +215,12 @@ export function ProductsTable({ products }: ProductsTableProps) {
                 id="product-search"
                 placeholder="Search products..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 className="pl-9 h-9 rounded-md bg-white text-sm border-neutral-200 focus:border-neutral-400 focus:ring-neutral-400"
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => { setSearchQuery(""); setCurrentPage(1); }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
                 >
                   <X className="h-4 w-4" />
@@ -233,7 +248,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
               <Badge
                 variant={!filterColor ? "default" : "outline"}
                 className="cursor-pointer hover:bg-neutral-800 rounded-md font-normal px-3 py-1 text-sm"
-                onClick={() => setFilterColor("")}
+                onClick={() => { setFilterColor(""); setCurrentPage(1); }}
               >
                 All Colors
               </Badge>
@@ -246,9 +261,10 @@ export function ProductsTable({ products }: ProductsTableProps) {
                       ? "bg-neutral-900 text-white hover:bg-neutral-800"
                       : "border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                   }`}
-                  onClick={() =>
-                    setFilterColor(filterColor === color ? "" : color)
-                  }
+                  onClick={() => {
+                    setFilterColor(filterColor === color ? "" : color);
+                    setCurrentPage(1);
+                  }}
                 >
                   {color}
                 </Badge>
@@ -315,7 +331,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredProducts.map((product) => (
+                  paginatedProducts.map((product) => (
                     <TableRow
                       key={product.id}
                       className={`group hover:bg-neutral-50 transition-colors border-b border-neutral-100 ${product.is_archived ? "opacity-70" : ""}`}
@@ -374,7 +390,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right pr-4">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1">
                           {activeTab === "active" ? (
                             <>
                               <Tooltip>
@@ -422,9 +438,86 @@ export function ProductsTable({ products }: ProductsTableProps) {
         </div>
         
         <div className="p-4 border-t border-neutral-200 bg-neutral-50/50 text-xs text-neutral-500 flex justify-between items-center">
-          <span>
-            Showing <span className="font-medium text-neutral-700">{filteredProducts.length}</span> of {currentProducts.length} products
-          </span>
+          <div className="flex items-center gap-3">
+            <span>
+              Showing <span className="font-medium text-neutral-700">{filteredProducts.length === 0 ? 0 : (safeCurrentPage - 1) * itemsPerPage + 1}</span>–<span className="font-medium text-neutral-700">{Math.min(safeCurrentPage * itemsPerPage, filteredProducts.length)}</span> of <span className="font-medium text-neutral-700">{filteredProducts.length}</span> products
+            </span>
+            <span className="text-neutral-300">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-neutral-500">Rows per page</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setItemsPerPage(val);
+                  setCurrentPage(1);
+                }}
+                className="h-7 rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-700 font-medium cursor-pointer hover:border-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+                <option value={filteredProducts.length}>All</option>
+              </select>
+            </div>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7 rounded-md border-neutral-200"
+                disabled={safeCurrentPage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((page) => {
+                  // Show first, last, current, and neighbors
+                  if (page === 1 || page === totalPages) return true;
+                  if (Math.abs(page - safeCurrentPage) <= 1) return true;
+                  return false;
+                })
+                .reduce<(number | "...")[]>((acc, page, idx, arr) => {
+                  if (idx > 0 && page - (arr[idx - 1] as number) > 1) {
+                    acc.push("...");
+                  }
+                  acc.push(page);
+                  return acc;
+                }, [])
+                .map((item, idx) =>
+                  item === "..." ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-neutral-400">…</span>
+                  ) : (
+                    <Button
+                      key={item}
+                      variant={safeCurrentPage === item ? "default" : "outline"}
+                      size="icon"
+                      className={`h-7 w-7 rounded-md text-xs font-medium ${
+                        safeCurrentPage === item
+                          ? "bg-neutral-900 text-white hover:bg-neutral-800 border-neutral-900"
+                          : "border-neutral-200 text-neutral-600 hover:bg-neutral-100"
+                      }`}
+                      onClick={() => setCurrentPage(item as number)}
+                    >
+                      {item}
+                    </Button>
+                  )
+                )}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7 rounded-md border-neutral-200"
+                disabled={safeCurrentPage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

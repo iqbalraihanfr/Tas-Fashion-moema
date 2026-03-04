@@ -23,7 +23,7 @@ export function DeleteProductButton({ productId }: { productId: string }) {
             size="icon"
             type="submit"
             disabled={isPending}
-            className="h-8 w-8 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+            className="h-8 w-8 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-md"
           >
             {isPending ? (
               <span className="h-4 w-4 border-2 border-red-200 border-t-red-500 rounded-full animate-spin" />

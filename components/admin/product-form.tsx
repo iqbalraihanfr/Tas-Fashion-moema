@@ -25,7 +25,6 @@ const productSchema = z.object({
   sku: z.string().min(1, "SKU code is required"),
   color: z.string().min(1, "Color variant is required"),
   dimensions: z.string().min(1, "Dimensions are required"),
-  slug: z.string().optional(),
   description: z.string().min(1, "Description is required"),
   price: z.number().int().positive("Price must be positive"),
   stock: z.number().int().nonnegative("Stock cannot be negative"),
@@ -66,7 +65,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
       sku: initialData.sku,
       color: initialData.color,
       dimensions: initialData.dimensions,
-      slug: initialData.slug,
+
       description: initialData.description,
       price: initialData.price,
       stock: initialData.stock,
@@ -77,7 +76,6 @@ export function ProductForm({ initialData }: ProductFormProps) {
       sku: "",
       color: "",
       dimensions: "",
-      slug: "",
       description: "",
       price: 0,
       stock: 0,
@@ -175,7 +173,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
     formData.append("sku", data.sku);
     formData.append("color", data.color);
     formData.append("dimensions", data.dimensions);
-    if (data.slug) formData.append("slug", data.slug);
+
     formData.append("description", data.description);
     formData.append("price", data.price.toString());
     formData.append("stock", data.stock.toString());
@@ -256,14 +254,6 @@ export function ProductForm({ initialData }: ProductFormProps) {
             </div>
         </div>
 
-        <div className="space-y-2">
-            <div className="flex items-center gap-2">
-                <Label htmlFor="slug" className="text-sm font-medium">Custom URL Slug</Label>
-                <Info className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <Input id="slug" {...register("slug")} className="h-10" placeholder="Leave blank to auto-generate (e.g. joanna-gray-leather-tote)" />
-            {errors.slug && <p className="text-red-500 text-xs font-medium">{errors.slug.message}</p>}
-        </div>
       </div>
 
       {/* SECTION 2: DETAILS & PRICING */}

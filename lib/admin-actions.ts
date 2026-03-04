@@ -15,7 +15,7 @@ const productSchema = z.object({
   sku: z.string().min(1, "SKU/Code is required"),
   color: z.string().min(1, "Color is required"),
   dimensions: z.string().min(1, "Dimensions are required"),
-  slug: z.string().optional(),
+
   description: z.string().min(1, "Description is required"),
   price: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().positive("Price must be positive")),
   stock: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().nonnegative("Stock cannot be negative")),
@@ -41,7 +41,7 @@ export async function createProduct(formData: FormData) {
   const price = formData.get("price") as string;
   const stock = formData.get("stock") as string;
   const newImages = formData.getAll("newImages") as File[];
-  const customSlug = formData.get("slug") as string | null;
+
 
   const parsed = productSchema.safeParse({
     name,
@@ -49,7 +49,7 @@ export async function createProduct(formData: FormData) {
     sku,
     color,
     dimensions,
-    slug: customSlug || undefined,
+
     description,
     price,
     stock,
@@ -71,7 +71,7 @@ export async function createProduct(formData: FormData) {
       price: parsed.data.price,
       stock: parsed.data.stock,
       images: parsed.data.newImages || [],
-      slug: parsed.data.slug,
+
     });
   } catch (error) {
     console.error(error);
@@ -96,7 +96,7 @@ export async function updateProduct(formData: FormData) {
   const stock = formData.get("stock") as string;
   const newImages = formData.getAll("newImages") as File[];
   const existingImagesJson = formData.get("existingImages") as string;
-  const customSlug = formData.get("slug") as string | null;
+
 
   const existingImages: string[] = existingImagesJson ? JSON.parse(existingImagesJson) : [];
 
@@ -107,7 +107,7 @@ export async function updateProduct(formData: FormData) {
     sku,
     color,
     dimensions,
-    slug: customSlug || undefined,
+
     description,
     price,
     stock,
@@ -132,7 +132,7 @@ export async function updateProduct(formData: FormData) {
       stock: parsed.data.stock,
       images: parsed.data.newImages || [],
       existingImages: parsed.data.existingImages,
-      slug: parsed.data.slug,
+
     });
   } catch (error) {
     console.error(error);

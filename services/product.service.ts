@@ -13,7 +13,7 @@ export interface CreateProductInput {
   price: number;
   stock: number;
   images: File[];
-  slug?: string;
+
 }
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {
@@ -22,7 +22,7 @@ export interface UpdateProductInput extends Partial<CreateProductInput> {
 }
 
 export async function createProduct(input: CreateProductInput) {
-  const slug = input.slug || slugify(input.name, { lower: true, strict: true });
+  const slug = slugify(input.name, { lower: true, strict: true });
   
   // 1. Upload Images with organized folder structure
   // Structure: products/{baseName}/{baseName}-{color}-{number}.webp
@@ -78,7 +78,7 @@ export async function updateProduct(input: UpdateProductInput) {
     finalImages = [...finalImages, ...newImageUrls];
   }
 
-  const slug = input.slug || (input.name ? slugify(input.name, { lower: true, strict: true }) : currentProduct.slug);
+  const slug = input.name ? slugify(input.name, { lower: true, strict: true }) : currentProduct.slug;
 
   // 3. Update in DB
   return await productRepo.updateProduct(input.id, {
