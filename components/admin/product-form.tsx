@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Product } from "@/lib/types";
 import {
-  compressImages,
+  resizeImagesForUpload,
   formatFileSize,
   type ImagePreview,
   type CompressedImageResult,
@@ -66,6 +66,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
   // Track compressed files ready for upload
   const [compressedFiles, setCompressedFiles] = useState<File[]>([]);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -116,7 +117,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
 
     // Compress images
     try {
-      const results: CompressedImageResult[] = await compressImages(filesArray);
+      const results: CompressedImageResult[] = await resizeImagesForUpload(filesArray);
 
       // Update previews with compression results
       setImagePreviews(prev => {
@@ -203,6 +204,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
       formData.append("existingImages", JSON.stringify(keptExistingImages));
     }
 
+    setSubmitError(null);
     try {
       if (isEditMode) {
         await updateProduct(formData);
@@ -211,6 +213,12 @@ export function ProductForm({ initialData }: ProductFormProps) {
       }
     } catch (error) {
       console.error("Form submission error", error);
+      const message = error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan produk.";
+      if (message.includes("Body exceeded") || message.includes("body size")) {
+        setSubmitError("Ukuran gambar terlalu besar. Coba kurangi jumlah gambar atau gunakan gambar dengan resolusi lebih kecil.");
+      } else {
+        setSubmitError(message);
+      }
     }
   };
 
@@ -327,8 +335,9 @@ export function ProductForm({ initialData }: ProductFormProps) {
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckCircle2 className="w-4 h-4 text-green-500" />
                 <span>
-                  Auto-compressed: {formatFileSize(totalOriginalSize)} → {formatFileSize(totalCompressedSize)}
+                  Resized for upload: {formatFileSize(totalOriginalSize)} → {formatFileSize(totalCompressedSize)}
                   <span className="text-green-500 font-medium ml-1">(-{totalSavings}%)</span>
+                  <span className="text-muted-foreground ml-1">· Final optimization on save</span>
                 </span>
               </div>
             )}
@@ -338,8 +347,8 @@ export function ProductForm({ initialData }: ProductFormProps) {
         <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900 rounded-lg p-4 flex items-start gap-3">
           <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
           <div className="text-sm text-muted-foreground space-y-1">
-            <p className="font-medium text-foreground">Automatic Image Compression</p>
-            <p>Images will be automatically compressed to WebP format (max 150KB) to ensure fast loading times.</p>
+            <p className="font-medium text-foreground">Two-Step Image Optimization</p>
+            <p>Images are resized in your browser for faster upload, then optimized server-side for the best quality at small file sizes (WebP, max ~200KB).</p>
           </div>
         </div>
         
@@ -428,6 +437,12 @@ export function ProductForm({ initialData }: ProductFormProps) {
         </div>
         {errors.images && <p className="text-red-500 text-xs font-medium">{errors.images.message}</p>}
       </div>
+
+      {submitError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+          {submitError}
+        </div>
+      )}
 
       <div className="pt-6 border-t flex justify-end gap-4">
         <Button 

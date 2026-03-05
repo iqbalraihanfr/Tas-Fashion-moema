@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import { AppError } from "@/lib/errors";
 import { generateStoragePath } from "@/lib/image-utils";
+import { compressWithSharp } from "@/lib/sharp-compress";
 
 const BUCKET_NAME = "product-images";
 
@@ -10,7 +11,7 @@ const BUCKET_NAME = "product-images";
  * Storage structure: products/{baseName}/{baseName}-{color}-{number}.webp
  * Example: products/joanna/joanna-gray-1.webp
  *
- * @param files - Array of image files (already compressed as WebP from client)
+ * @param files - Array of image files (resized from client, compressed server-side with Sharp)
  * @param baseName - Product model name (e.g., "Joanna")
  * @param color - Color variant (e.g., "Gray")
  * @param startIndex - Starting index for image numbering (default: 0)
@@ -28,12 +29,15 @@ export async function uploadProductImages(
     const file = files[i];
     if (file.size === 0) continue;
 
+    // Compress with Sharp for optimal quality at small file size
+    const compressedBuffer = await compressWithSharp(file);
+
     // Generate organized storage path
     const storagePath = generateStoragePath(baseName, color, startIndex + i);
 
     const { data, error } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
-      .upload(storagePath, file, {
+      .upload(storagePath, compressedBuffer, {
         cacheControl: "31536000", // 1 year cache for immutable images
         contentType: "image/webp",
         upsert: true, // Allow overwriting if re-uploading

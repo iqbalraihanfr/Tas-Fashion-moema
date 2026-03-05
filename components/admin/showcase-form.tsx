@@ -4,7 +4,8 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { createShowcase, updateShowcase } from "@/lib/admin-actions";
 import { Showcase } from "@/lib/types";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
+import { resizeImageForUpload, formatFileSize } from "@/lib/image-utils";
 
 const CATEGORY_OPTIONS = [
   { label: "All Products", value: "/catalog" },
@@ -25,21 +26,47 @@ export default function ShowcaseForm({ initialData }: ShowcaseFormProps) {
   const [preview, setPreview] = useState<string | null>(
     initialData?.image_url || null
   );
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [originalSize, setOriginalSize] = useState<number | null>(null);
+  const [compressedSize, setCompressedSize] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(file);
+      setOriginalSize(file.size);
+      setIsCompressing(true);
+      
+      try {
+        const compressedFile = await resizeImageForUpload(file);
+        setSelectedFile(compressedFile);
+        setCompressedSize(compressedFile.size);
+        
+        const reader = new FileReader();
+        reader.onloadend = () => setPreview(reader.result as string);
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error("Compression error:", error);
+        // Fallback to original
+        setSelectedFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => setPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 
   const clearImage = () => {
     setPreview(null);
+    setSelectedFile(null);
+    setOriginalSize(null);
+    setCompressedSize(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -48,6 +75,13 @@ export default function ShowcaseForm({ initialData }: ShowcaseFormProps) {
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true);
     formData.set("is_active", isActive ? "true" : "false");
+    
+    // Explicitly set the file to guarantee it exists in the payload
+    if (selectedFile) {
+      formData.set("image", selectedFile);
+    }
+    
+    setSubmitError(null);
     try {
       if (isEditMode) {
         await updateShowcase(formData);
@@ -56,6 +90,12 @@ export default function ShowcaseForm({ initialData }: ShowcaseFormProps) {
       }
     } catch (error) {
       console.error(error);
+      const message = error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan showcase.";
+      if (message.includes("Body exceeded") || message.includes("body size")) {
+        setSubmitError("Ukuran gambar terlalu besar. Coba gunakan gambar dengan resolusi lebih kecil.");
+      } else {
+        setSubmitError(message);
+      }
       setIsSubmitting(false);
     }
   };
@@ -91,26 +131,58 @@ export default function ShowcaseForm({ initialData }: ShowcaseFormProps) {
                 type="button"
                 onClick={clearImage}
                 className="absolute top-3 right-3 p-1.5 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
+                disabled={isCompressing}
               >
                 <X className="h-4 w-4" />
               </button>
+              
+              {/* Compression Stats */}
+              {compressedSize && originalSize && (
+                <div className="absolute bottom-0 left-0 right-0 py-2 px-2 bg-gradient-to-t from-black/80 to-transparent">
+                  <div className="text-white text-[10px] text-center font-medium flex items-center justify-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3 text-green-400" />
+                    <span className="line-through opacity-70">{formatFileSize(originalSize)}</span>
+                    <span>→</span>
+                    <span>{formatFileSize(compressedSize)}</span>
+                    <span className="text-green-400 ml-1">
+                      (-{Math.round((1 - compressedSize / originalSize) * 100)}%)
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <label
-              onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center aspect-[4/3] rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 cursor-pointer hover:border-neutral-400 hover:bg-neutral-100 transition-colors"
+              onClick={(e) => {
+                if (isCompressing) e.preventDefault();
+                else fileInputRef.current?.click();
+              }}
+              className={`flex flex-col items-center justify-center aspect-[4/3] rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 hover:border-neutral-400 hover:bg-neutral-100 transition-colors ${
+                isCompressing ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
+              }`}
             >
-              <Upload className="h-8 w-8 text-neutral-400 mb-2" />
-              <span className="text-sm font-medium text-neutral-500">
-                Click to upload banner image
-              </span>
-              <span className="text-xs text-neutral-400 mt-1">
-                Recommended: 1200×900px or 4:3 ratio
-              </span>
+              {isCompressing ? (
+                <>
+                  <Loader2 className="h-8 w-8 text-neutral-400 mb-2 animate-spin" />
+                  <span className="text-sm font-medium text-neutral-500">
+                    Compressing image...
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-8 w-8 text-neutral-400 mb-2" />
+                  <span className="text-sm font-medium text-neutral-500">
+                    Click to upload banner image
+                  </span>
+                  <span className="text-xs text-neutral-400 mt-1">
+                    Recommended: 1200×900px or 4:3 ratio
+                  </span>
+                </>
+              )}
             </label>
           )}
         </div>
-        {preview && (
+        {preview && !isCompressing && (
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -227,18 +299,26 @@ export default function ShowcaseForm({ initialData }: ShowcaseFormProps) {
         </span>
       </div>
 
+      {submitError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+          {submitError}
+        </div>
+      )}
+
       {/* Submit */}
       <div className="flex items-center gap-3 pt-4 border-t border-neutral-200">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isCompressing}
           className="px-6 py-3 bg-neutral-900 text-white text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isSubmitting
             ? "Saving..."
-            : isEditMode
-              ? "Update Showcase"
-              : "Create Showcase"}
+            : isCompressing
+              ? "Compressing..."
+              : isEditMode
+                ? "Update Showcase"
+                : "Create Showcase"}
         </button>
         <a
           href="/admin/dashboard/showcase"

@@ -1,6 +1,7 @@
 import * as showcaseRepo from "./database/showcase.repository";
 import { supabaseAdmin } from "@/lib/supabase";
 import { AppError } from "@/lib/errors";
+import { compressWithSharp } from "@/lib/sharp-compress";
 
 const BUCKET_NAME = "showcase-images";
 
@@ -27,13 +28,15 @@ export interface UpdateShowcaseInput {
  * Upload a showcase image to Supabase Storage
  */
 async function uploadShowcaseImage(file: File): Promise<string> {
-  const filename = `showcase-${Date.now()}-${file.name.replace(/\s/g, "_")}`;
+  // Compress with Sharp for optimal quality
+  const compressedBuffer = await compressWithSharp(file);
+  const filename = `showcase-${Date.now()}-${file.name.replace(/\.[^/.]+$/, ".webp").replace(/\s/g, "_")}`;
 
   const { data, error } = await supabaseAdmin.storage
     .from(BUCKET_NAME)
-    .upload(filename, file, {
+    .upload(filename, compressedBuffer, {
       cacheControl: "31536000",
-      contentType: file.type || "image/webp",
+      contentType: "image/webp",
       upsert: true,
     });
 

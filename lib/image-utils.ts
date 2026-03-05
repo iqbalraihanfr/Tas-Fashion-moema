@@ -1,49 +1,89 @@
-import imageCompression from "browser-image-compression";
+const MAX_DIMENSION = 1500;
+const UPLOAD_QUALITY = 0.5;
 
 /**
- * Configuration for image compression
+ * Convert canvas to a compressed blob, trying WebP first then falling back to JPEG.
  */
-export const IMAGE_COMPRESSION_OPTIONS = {
-  maxSizeMB: 0.15, // Max 150KB
-  maxWidthOrHeight: 1920, // Resize if too large
-  useWebWorker: true, // Non-blocking
-  fileType: "image/webp" as const, // WebP = smaller size, better quality
-  initialQuality: 0.85,
-};
+function canvasToCompressedBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    // Try WebP first
+    canvas.toBlob(
+      (webpBlob) => {
+        if (webpBlob && webpBlob.type === "image/webp") {
+          return resolve(webpBlob);
+        }
 
-/**
- * Compress a single image file
- * @param file - Original image file
- * @returns Compressed file as WebP
- */
-export async function compressImage(file: File): Promise<File> {
-  try {
-    const compressedBlob = await imageCompression(
-      file,
-      IMAGE_COMPRESSION_OPTIONS
+        // WebP not supported — fallback to JPEG (universally supported)
+        canvas.toBlob(
+          (jpegBlob) => {
+            if (!jpegBlob) return reject(new Error("Canvas toBlob failed"));
+            resolve(jpegBlob);
+          },
+          "image/jpeg",
+          UPLOAD_QUALITY
+        );
+      },
+      "image/webp",
+      UPLOAD_QUALITY
     );
-
-    // Convert blob back to File with proper name
-    const compressedFile = new File(
-      [compressedBlob],
-      file.name.replace(/\.[^/.]+$/, ".webp"), // Change extension to .webp
-      { type: "image/webp" }
-    );
-
-    return compressedFile;
-  } catch (error) {
-    console.error("Error compressing image:", error);
-    throw error;
-  }
+  });
 }
 
 /**
- * Compress multiple image files with progress callback
- * @param files - Array of original image files
- * @param onProgress - Optional callback for progress updates
- * @returns Array of compressed files with metadata
+ * Resize an image on the browser using canvas.
+ * This is a lightweight pre-processing step to reduce upload size.
+ * Final compression happens server-side with Sharp for optimal quality.
  */
-export async function compressImages(
+export async function resizeImageForUpload(file: File): Promise<File> {
+  // Skip if already small enough (< 500KB)
+  if (file.size < 500 * 1024) {
+    return file;
+  }
+
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = async () => {
+      try {
+        const { width, height } = img;
+
+        // Calculate new dimensions (resize if larger than max)
+        const ratio = Math.min(
+          MAX_DIMENSION / width,
+          MAX_DIMENSION / height,
+          1 // never upscale
+        );
+        const newWidth = Math.round(width * ratio);
+        const newHeight = Math.round(height * ratio);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+        const blob = await canvasToCompressedBlob(canvas);
+        const ext = blob.type === "image/webp" ? ".webp" : ".jpg";
+        const resizedFile = new File(
+          [blob],
+          file.name.replace(/\.[^/.]+$/, ext),
+          { type: blob.type }
+        );
+
+        URL.revokeObjectURL(img.src);
+        resolve(resizedFile);
+      } catch (err) {
+        reject(err);
+      }
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/**
+ * Resize multiple images with progress callback
+ */
+export async function resizeImagesForUpload(
   files: File[],
   onProgress?: (progress: CompressionProgress) => void
 ): Promise<CompressedImageResult[]> {
@@ -61,15 +101,15 @@ export async function compressImages(
     });
 
     try {
-      const compressedFile = await compressImage(file);
-      const compressedSize = compressedFile.size;
+      const resizedFile = await resizeImageForUpload(file);
+      const compressedSize = resizedFile.size;
       const savings = Math.round((1 - compressedSize / originalSize) * 100);
 
       results.push({
-        file: compressedFile,
+        file: resizedFile,
         originalSize,
         compressedSize,
-        savings,
+        savings: Math.max(savings, 0),
         status: "success",
       });
 
@@ -78,10 +118,9 @@ export async function compressImages(
         totalFiles: files.length,
         fileName: file.name,
         status: "done",
-        savings,
+        savings: Math.max(savings, 0),
       });
     } catch {
-      // If compression fails, use original file
       results.push({
         file,
         originalSize,
@@ -105,37 +144,21 @@ export async function compressImages(
 /**
  * Generate a standardized filename for Supabase storage
  * Format: {baseName}-{color}-{number}.webp
- * Example: joanna-gray-1.webp (1 = hero/thumbnail, 2+ = gallery)
- *
- * @param baseName - Product model name (e.g., "Joanna")
- * @param color - Color variant (e.g., "Gray", "Pine Brown")
- * @param index - Image index (0 = hero/thumbnail)
- * @returns Standardized filename
  */
 export function generateImageFileName(
   baseName: string,
   color: string,
   index: number
 ): string {
-  // Convert to lowercase and replace spaces with dashes
   const normalizedBaseName = baseName.toLowerCase().replace(/\s+/g, "-");
   const normalizedColor = color.toLowerCase().replace(/\s+/g, "-");
-
-  // Index starts at 1 (1 = hero, 2+ = gallery)
   const imageNumber = index + 1;
-
   return `${normalizedBaseName}-${normalizedColor}-${imageNumber}.webp`;
 }
 
 /**
  * Generate the full storage path for a product image
  * Format: products/{baseName}/{baseName}-{color}-{number}.webp
- * Example: products/joanna/joanna-gray-1.webp
- *
- * @param baseName - Product model name
- * @param color - Color variant
- * @param index - Image index
- * @returns Full storage path
  */
 export function generateStoragePath(
   baseName: string,
@@ -144,14 +167,11 @@ export function generateStoragePath(
 ): string {
   const normalizedBaseName = baseName.toLowerCase().replace(/\s+/g, "-");
   const fileName = generateImageFileName(baseName, color, index);
-
   return `products/${normalizedBaseName}/${fileName}`;
 }
 
 /**
  * Format file size for display
- * @param bytes - File size in bytes
- * @returns Human-readable file size
  */
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
