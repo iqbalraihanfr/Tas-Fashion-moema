@@ -223,10 +223,15 @@ export default function Navbar() {
                   </Button>
                 </form>
               ) : (
-                <Button variant="ghost" size="sm" className="text-xs font-medium uppercase tracking-widest gap-2 hover:bg-transparent" onClick={() => setIsSearchOpen(true)}>
-                  <Search className="h-4 w-4" strokeWidth={1.5} />
-                  Search
-                </Button>
+                <div className="flex items-center gap-6">
+                  <Button variant="ghost" size="sm" className="text-xs font-medium uppercase tracking-widest gap-2 hover:bg-transparent px-0" onClick={() => setIsSearchOpen(true)}>
+                    <Search className="h-4 w-4" strokeWidth={1.5} />
+                    Search
+                  </Button>
+                  <Link href="/" className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors">
+                    Beranda
+                  </Link>
+                </div>
               )}
             </div>
 

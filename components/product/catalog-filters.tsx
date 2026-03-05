@@ -4,6 +4,7 @@ import { useQueryState, parseAsString } from "nuqs";
 import { useState, useEffect } from "react";
 import { X, Search } from "lucide-react";
 import { useDebounce } from "@/lib/hooks/use-debounce";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 const CATEGORIES = ["Totes", "Shoulder Bags", "Crossbody", "Mini Bags", "Clutches", "Backpacks"];
 
@@ -88,59 +89,66 @@ export function CatalogFiltersSidebar({ onClose }: CatalogFiltersSidebarProps) {
         </div>
       </section>
 
-      {/* Categories */}
-      <section>
-        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Kategori</h3>
-        <div className="flex flex-col space-y-2.5">
-          {CATEGORIES.map((cat) => {
-            const isActive = category === cat.toLowerCase();
-            return (
-              <button
-                key={cat}
-                onClick={() => setCategory(isActive ? null : cat.toLowerCase())}
-                className={`text-left text-xs transition-all ${
-                  isActive
-                    ? "font-bold text-foreground pl-3 border-l-2 border-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      {/* Filters Accordion */}
+      <Accordion type="multiple" defaultValue={["categories", "price"]} className="w-full">
+        {/* Categories */}
+        <AccordionItem value="categories" className="border-b-0">
+          <AccordionTrigger className="text-[11px] font-bold uppercase tracking-[0.2em] hover:no-underline py-3">Kategori</AccordionTrigger>
+          <AccordionContent>
+            <div className="flex flex-col space-y-3 pt-2">
+              {CATEGORIES.map((cat) => {
+                const isActive = category === cat.toLowerCase();
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setCategory(isActive ? null : cat.toLowerCase())}
+                    className={`text-left text-sm transition-all ${
+                      isActive
+                        ? "font-semibold text-foreground pl-3 border-l-2 border-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* Price Range */}
-      <section>
-        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4">Harga</h3>
-        <div className="flex flex-col space-y-2.5">
-          {PRICE_RANGES.map((range, i) => {
-            const isActive = minPrice === range.min.toString() && maxPrice === range.max.toString();
-            return (
-              <button
-                key={i}
-                onClick={() => {
-                  if (isActive) {
-                    setMinPrice(null);
-                    setMaxPrice(null);
-                  } else {
-                    setMinPrice(range.min.toString());
-                    setMaxPrice(range.max.toString());
-                  }
-                }}
-                className={`text-left text-xs transition-all ${
-                  isActive
-                    ? "font-bold text-foreground pl-3 border-l-2 border-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {range.label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
+        {/* Price Range */}
+        <AccordionItem value="price" className="border-b-0">
+          <AccordionTrigger className="text-[11px] font-bold uppercase tracking-[0.2em] hover:no-underline py-3 mt-4 border-t border-border pt-4">Harga</AccordionTrigger>
+          <AccordionContent>
+            <div className="flex flex-col space-y-3 pt-2">
+              {PRICE_RANGES.map((range, i) => {
+                const isActive = minPrice === range.min.toString() && maxPrice === range.max.toString();
+                return (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (isActive) {
+                        setMinPrice(null);
+                        setMaxPrice(null);
+                      } else {
+                        setMinPrice(range.min.toString());
+                        setMaxPrice(range.max.toString());
+                      }
+                    }}
+                    className={`text-left text-sm transition-all ${
+                      isActive
+                        ? "font-semibold text-foreground pl-3 border-l-2 border-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {range.label}
+                  </button>
+                );
+              })}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

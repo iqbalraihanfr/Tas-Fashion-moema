@@ -68,7 +68,7 @@ export function CatalogContent({ products, title }: CatalogContentProps) {
       <div className="flex">
         {/* Filter Sidebar */}
         <aside
-          className={`shrink-0 overflow-hidden border-r border-border bg-background transition-all duration-300 ease-in-out ${
+          className={`shrink-0 overflow-y-auto overflow-x-hidden border-r border-border bg-background transition-all duration-300 ease-in-out sticky top-[calc(var(--nav-offset,0px)+120px)] h-[calc(100vh-var(--nav-offset,0px)-120px)] ${
             isFilterOpen ? "w-64 md:w-72 opacity-100" : "w-0 opacity-0"
           }`}
         >

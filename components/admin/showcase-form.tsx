@@ -69,6 +69,15 @@ export default function ShowcaseForm({ initialData }: ShowcaseFormProps) {
         <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-500">
           Banner Image *
         </label>
+        {/* Single persistent file input — never unmounts so it retains the selected file */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          name="image"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="hidden"
+        />
         <div className="relative">
           {preview ? (
             <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100">
@@ -87,7 +96,10 @@ export default function ShowcaseForm({ initialData }: ShowcaseFormProps) {
               </button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center aspect-[4/3] rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 cursor-pointer hover:border-neutral-400 hover:bg-neutral-100 transition-colors">
+            <label
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center aspect-[4/3] rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 cursor-pointer hover:border-neutral-400 hover:bg-neutral-100 transition-colors"
+            >
               <Upload className="h-8 w-8 text-neutral-400 mb-2" />
               <span className="text-sm font-medium text-neutral-500">
                 Click to upload banner image
@@ -95,25 +107,7 @@ export default function ShowcaseForm({ initialData }: ShowcaseFormProps) {
               <span className="text-xs text-neutral-400 mt-1">
                 Recommended: 1200×900px or 4:3 ratio
               </span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
             </label>
-          )}
-          {preview && (
-            <input
-              ref={fileInputRef}
-              type="file"
-              name="image"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
           )}
         </div>
         {preview && (
