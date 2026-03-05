@@ -12,7 +12,10 @@ export default async function EditShowcasePage({
 }) {
   const { id } = await params;
 
-  const showcases = await showcaseService.getAllShowcases();
+  const [showcases, existingHeroId] = await Promise.all([
+    showcaseService.getAllShowcases(),
+    showcaseService.getHeroShowcaseId(),
+  ]);
   const showcase = showcases.find((s) => s.id === id);
 
   if (!showcase) {
@@ -49,7 +52,7 @@ export default async function EditShowcasePage({
           </p>
         </div>
       </div>
-      <ShowcaseForm initialData={initialData} />
+      <ShowcaseForm initialData={initialData} existingHeroId={existingHeroId} />
     </div>
   );
 }

@@ -1,8 +1,11 @@
 import ShowcaseForm from "@/components/admin/showcase-form";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import * as showcaseService from "@/services/showcase.service";
 
-export default function NewShowcasePage() {
+export default async function NewShowcasePage() {
+  const existingHeroId = await showcaseService.getHeroShowcaseId();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -21,7 +24,7 @@ export default function NewShowcasePage() {
           </p>
         </div>
       </div>
-      <ShowcaseForm />
+      <ShowcaseForm existingHeroId={existingHeroId} />
     </div>
   );
 }

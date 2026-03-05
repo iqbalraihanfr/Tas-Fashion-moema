@@ -92,6 +92,15 @@ export async function getActiveShowcases() {
   return showcaseRepo.getActiveShowcases();
 }
 
+/**
+ * Get the existing hero showcase ID (position = 0), if any
+ */
+export async function getHeroShowcaseId(): Promise<string | null> {
+  const all = await showcaseRepo.getAllShowcases();
+  const hero = all.find((s) => s.position === 0);
+  return hero?.id ?? null;
+}
+
 export async function createShowcase(input: CreateShowcaseInput) {
   const imageUrl = await uploadShowcaseImage(input.image);
 

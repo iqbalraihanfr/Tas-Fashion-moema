@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
-import { UploadCloud, XCircle, Info, CheckCircle2, Loader2 } from "lucide-react";
+import { UploadCloud, XCircle, Info, CheckCircle2, Loader2, Crop } from "lucide-react";
 import { createProduct, updateProduct } from "@/lib/admin-actions";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -14,10 +14,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Product } from "@/lib/types";
 import {
   resizeImagesForUpload,
+  resizeImageForUpload,
   formatFileSize,
   type ImagePreview,
   type CompressedImageResult,
 } from "@/lib/image-utils";
+import ImageCropper from "@/components/admin/image-cropper";
 
 const PRODUCT_CATEGORIES = [
   "Totes",
@@ -67,6 +69,10 @@ export function ProductForm({ initialData }: ProductFormProps) {
   const [compressedFiles, setCompressedFiles] = useState<File[]>([]);
   const [isCompressing, setIsCompressing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Crop state
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropIndex, setCropIndex] = useState<number | null>(null);
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -178,6 +184,62 @@ export function ProductForm({ initialData }: ProductFormProps) {
     }
   }, [imagePreviews, setValue]);
 
+  const openCrop = useCallback((index: number) => {
+    const preview = imagePreviews[index];
+    if (!preview || preview.isExisting) return;
+    setCropIndex(index);
+    setCropSrc(preview.previewUrl);
+  }, [imagePreviews]);
+
+  const handleCropComplete = useCallback(async (croppedBlob: Blob) => {
+    if (cropIndex === null) return;
+    setCropSrc(null);
+
+    const croppedFile = new File([croppedBlob], "cropped.jpg", { type: "image/jpeg" });
+    const resizedFile = await resizeImageForUpload(croppedFile);
+
+    // Update preview
+    const newPreviewUrl = URL.createObjectURL(resizedFile);
+    setImagePreviews(prev => {
+      const updated = [...prev];
+      if (updated[cropIndex]) {
+        // Revoke old URL
+        if (updated[cropIndex].previewUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(updated[cropIndex].previewUrl);
+        }
+        updated[cropIndex] = {
+          ...updated[cropIndex],
+          file: resizedFile,
+          previewUrl: newPreviewUrl,
+          compressedSize: resizedFile.size,
+          savings: Math.max(0, Math.round((1 - resizedFile.size / updated[cropIndex].originalSize) * 100)),
+          status: "compressed",
+        };
+      }
+      return updated;
+    });
+
+    // Update compressed files
+    const existingCount = imagePreviews.filter(p => p.isExisting).length;
+    const fileIndex = cropIndex - existingCount;
+    if (fileIndex >= 0) {
+      setCompressedFiles(prev => {
+        const updated = [...prev];
+        updated[fileIndex] = resizedFile;
+        return updated;
+      });
+    }
+
+    // Update form images
+    setValue("images", imagePreviews.map((p, i) => i === cropIndex ? newPreviewUrl : p.previewUrl));
+    setCropIndex(null);
+  }, [cropIndex, imagePreviews, setValue]);
+
+  const handleCropCancel = useCallback(() => {
+    setCropSrc(null);
+    setCropIndex(null);
+  }, []);
+
   const onSubmit = async (data: ProductFormData) => {
     const formData = new FormData();
     formData.append("name", data.name);
@@ -234,6 +296,17 @@ export function ProductForm({ initialData }: ProductFormProps) {
     : 0;
 
   return (
+    <>
+    {/* Crop Modal */}
+    {cropSrc && (
+      <ImageCropper
+        imageSrc={cropSrc}
+        aspect={3 / 4}
+        onCropComplete={handleCropComplete}
+        onCancel={handleCropCancel}
+      />
+    )}
+
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-12 pb-20">
       {/* SECTION 1: BASIC INFORMATION */}
       <div className="space-y-6">
@@ -369,7 +442,17 @@ export function ProductForm({ initialData }: ProductFormProps) {
                   <span className="text-xs font-medium">Compressing...</span>
                 </div>
               ) : (
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-start justify-end p-2">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-start justify-end p-2 gap-1.5">
+                    {!preview.isExisting && (
+                      <button
+                        type="button"
+                        onClick={() => openCrop(index)}
+                        className="bg-background/90 hover:bg-background text-foreground rounded-md p-1.5 transition-colors shadow-sm"
+                        title="Crop"
+                      >
+                        <Crop className="w-4 h-4 text-blue-500" />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
@@ -461,5 +544,6 @@ export function ProductForm({ initialData }: ProductFormProps) {
         </Button>
       </div>
     </form>
+    </>
   );
 }

@@ -249,7 +249,7 @@ const showcaseSchema = z.object({
   title: z.string().min(1, "Title is required"),
   subtitle: z.string().nullable().default(null),
   link_url: z.string().min(1, "Link URL is required"),
-  position: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().positive()),
+  position: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().nonnegative()),
   is_active: z.boolean().default(true),
 });
 
