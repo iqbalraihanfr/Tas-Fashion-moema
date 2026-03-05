@@ -18,6 +18,7 @@ describe('Product Service Integration Tests', () => {
     color: 'Gray',
     dimensions: '45x45cm',
     description: 'Luxury tote',
+    category: 'Totes',
     price: 1500000,
     stock: 10,
     images: [mockFile],
@@ -55,6 +56,7 @@ describe('Product Service Integration Tests', () => {
         sku: mockInput.sku,
         color: mockInput.color,
         dimensions: mockInput.dimensions,
+        category: mockInput.category,
         description: mockInput.description,
         price: mockInput.price,
         stock: mockInput.stock,
@@ -94,7 +96,8 @@ describe('Product Service Integration Tests', () => {
         images: ['old-img-1.jpg', 'old-img-2.jpg'],
         createdAt: 'date',
         updatedAt: 'date',
-        is_archived: false
+        is_archived: false,
+        category: null,
     };
 
     it('should throw error if product not found', async () => {

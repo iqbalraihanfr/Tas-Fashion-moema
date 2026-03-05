@@ -291,6 +291,9 @@ export function ProductsTable({ products }: ProductsTableProps) {
                   <TableHead className="font-medium hidden sm:table-cell text-neutral-500 text-xs uppercase tracking-wider">
                     Color
                   </TableHead>
+                  <TableHead className="font-medium hidden md:table-cell text-neutral-500 text-xs uppercase tracking-wider">
+                    Category
+                  </TableHead>
                   <TableHead className="font-medium text-neutral-500 text-xs uppercase tracking-wider">
                     Price
                   </TableHead>
@@ -305,7 +308,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
               <TableBody>
                 {filteredProducts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-48 text-center">
+                    <TableCell colSpan={8} className="h-48 text-center">
                       <div className="flex flex-col items-center gap-2 text-neutral-400">
                         {activeTab === "archived" ? (
                           <Archive className="h-10 w-10 opacity-30 mb-2" />
@@ -369,6 +372,15 @@ export function ProductsTable({ products }: ProductsTableProps) {
                         <span className="text-sm text-neutral-600">
                           {product.color || "—"}
                         </span>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {product.category ? (
+                          <span className="text-xs text-neutral-600 bg-neutral-100 px-2 py-1 rounded-md">
+                            {product.category}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-neutral-400">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <span className="text-sm font-medium text-neutral-900">

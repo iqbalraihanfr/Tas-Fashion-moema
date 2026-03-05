@@ -10,10 +10,10 @@ export interface CreateProductInput {
   color: string;          // Color variant, e.g., "Gray"
   dimensions: string;     // Size, e.g., "45 cm x 45 cm"
   description: string;
+  category: string | null; // Product category, e.g., "Totes"
   price: number;
   stock: number;
   images: File[];
-
 }
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {
@@ -41,6 +41,7 @@ export async function createProduct(input: CreateProductInput) {
     color: input.color,
     dimensions: input.dimensions,
     description: input.description,
+    category: input.category,
     price: input.price,
     stock: input.stock,
     images: imageUrls,
@@ -89,6 +90,7 @@ export async function updateProduct(input: UpdateProductInput) {
     color: input.color,
     dimensions: input.dimensions,
     description: input.description,
+    category: input.category,
     price: input.price,
     stock: input.stock,
     images: finalImages,

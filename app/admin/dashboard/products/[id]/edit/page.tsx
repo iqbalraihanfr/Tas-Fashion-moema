@@ -33,6 +33,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     sku: product.sku,
     color: product.color,
     dimensions: product.dimensions,
+    category: product.category ?? null,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
     is_archived: product.is_archived ?? false,

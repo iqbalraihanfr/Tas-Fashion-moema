@@ -15,7 +15,7 @@ const productSchema = z.object({
   sku: z.string().min(1, "SKU/Code is required"),
   color: z.string().min(1, "Color is required"),
   dimensions: z.string().min(1, "Dimensions are required"),
-
+  category: z.string().nullable().default(null),
   description: z.string().min(1, "Description is required"),
   price: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().positive("Price must be positive")),
   stock: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().nonnegative("Stock cannot be negative")),
@@ -37,11 +37,12 @@ export async function createProduct(formData: FormData) {
   const sku = formData.get("sku") as string;
   const color = formData.get("color") as string;
   const dimensions = formData.get("dimensions") as string;
+  const categoryRaw = formData.get("category") as string;
+  const category = categoryRaw || null;
   const description = formData.get("description") as string;
   const price = formData.get("price") as string;
   const stock = formData.get("stock") as string;
   const newImages = formData.getAll("newImages") as File[];
-
 
   const parsed = productSchema.safeParse({
     name,
@@ -49,7 +50,7 @@ export async function createProduct(formData: FormData) {
     sku,
     color,
     dimensions,
-
+    category,
     description,
     price,
     stock,
@@ -67,11 +68,11 @@ export async function createProduct(formData: FormData) {
       sku: parsed.data.sku,
       color: parsed.data.color,
       dimensions: parsed.data.dimensions,
+      category: parsed.data.category,
       description: parsed.data.description,
       price: parsed.data.price,
       stock: parsed.data.stock,
       images: parsed.data.newImages || [],
-
     });
   } catch (error) {
     console.error(error);
@@ -91,12 +92,13 @@ export async function updateProduct(formData: FormData) {
   const sku = formData.get("sku") as string;
   const color = formData.get("color") as string;
   const dimensions = formData.get("dimensions") as string;
+  const categoryRaw = formData.get("category") as string;
+  const category = categoryRaw || null;
   const description = formData.get("description") as string;
   const price = formData.get("price") as string;
   const stock = formData.get("stock") as string;
   const newImages = formData.getAll("newImages") as File[];
   const existingImagesJson = formData.get("existingImages") as string;
-
 
   const existingImages: string[] = existingImagesJson ? JSON.parse(existingImagesJson) : [];
 
@@ -107,7 +109,7 @@ export async function updateProduct(formData: FormData) {
     sku,
     color,
     dimensions,
-
+    category,
     description,
     price,
     stock,
@@ -127,12 +129,12 @@ export async function updateProduct(formData: FormData) {
       sku: parsed.data.sku,
       color: parsed.data.color,
       dimensions: parsed.data.dimensions,
+      category: parsed.data.category,
       description: parsed.data.description,
       price: parsed.data.price,
       stock: parsed.data.stock,
       images: parsed.data.newImages || [],
       existingImages: parsed.data.existingImages,
-
     });
   } catch (error) {
     console.error(error);

@@ -10,6 +10,7 @@ export type Product = {
   price: number;          // Price in IDR (integer, no decimals)
   stock: number;
   images: string[];       // Array of Supabase Storage URLs
+  category: string | null; // Product category, e.g., "Totes", "Crossbody"
   is_archived: boolean;   // true = hidden from public storefront
   createdAt: string;
   updatedAt: string;

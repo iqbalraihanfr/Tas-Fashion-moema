@@ -19,12 +19,22 @@ import {
   type CompressedImageResult,
 } from "@/lib/image-utils";
 
+const PRODUCT_CATEGORIES = [
+  "Totes",
+  "Shoulder Bags",
+  "Crossbody",
+  "Mini Bags",
+  "Clutches",
+  "Backpacks",
+] as const;
+
 const productSchema = z.object({
   name: z.string().min(1, "Full product name is required"),
   baseName: z.string().min(1, "Model/Base name is required"),
   sku: z.string().min(1, "SKU code is required"),
   color: z.string().min(1, "Color variant is required"),
   dimensions: z.string().min(1, "Dimensions are required"),
+  category: z.string().nullable(),
   description: z.string().min(1, "Description is required"),
   price: z.number().int().positive("Price must be positive"),
   stock: z.number().int().nonnegative("Stock cannot be negative"),
@@ -65,7 +75,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
       sku: initialData.sku,
       color: initialData.color,
       dimensions: initialData.dimensions,
-
+      category: initialData.category ?? null,
       description: initialData.description,
       price: initialData.price,
       stock: initialData.stock,
@@ -76,6 +86,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
       sku: "",
       color: "",
       dimensions: "",
+      category: null,
       description: "",
       price: 0,
       stock: 0,
@@ -173,7 +184,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
     formData.append("sku", data.sku);
     formData.append("color", data.color);
     formData.append("dimensions", data.dimensions);
-
+    formData.append("category", data.category || "");
     formData.append("description", data.description);
     formData.append("price", data.price.toString());
     formData.append("stock", data.stock.toString());
@@ -251,6 +262,25 @@ export function ProductForm({ initialData }: ProductFormProps) {
                 <Label htmlFor="dimensions" className="text-sm font-medium">Dimensions</Label>
                 <Input id="dimensions" {...register("dimensions")} className="h-10" placeholder="e.g. 45 cm x 45 cm" />
                 {errors.dimensions && <p className="text-red-500 text-xs font-medium">{errors.dimensions.message}</p>}
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+                <Label htmlFor="category" className="text-sm font-medium">Category</Label>
+                <select
+                  id="category"
+                  {...register("category")}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">— Select Category —</option>
+                  {PRODUCT_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">Assign a category to display on the buyer-facing catalog.</p>
             </div>
         </div>
 

@@ -19,9 +19,17 @@ export async function getAllProducts(filter: ProductFilter = {}): Promise<Produc
   }
 
   if (filter.category) {
-    // Categories map to baseName or color — normalize hyphens to spaces for matching
-    const cat = filter.category.replace(/-/g, ' ').replace(/'/g, "''");
-    query = query.or(`name.ilike.%${cat}%,baseName.ilike.%${cat}%,color.ilike.%${cat}%`);
+    if (filter.category === 'new-arrivals') {
+      // Special case: "New Arrivals" = most recent products (already sorted by createdAt desc)
+      query = query.order('createdAt', { ascending: false });
+    } else {
+      // Normalize slug format to Title Case for exact match
+      // e.g., "shoulder-bags" → "Shoulder Bags"
+      const categoryName = filter.category
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      query = query.eq('category', categoryName);
+    }
   }
 
   if (filter.minPrice != null) {

@@ -65,7 +65,8 @@ describe('Order Service Integration Tests', () => {
       images: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      is_archived: false
+      is_archived: false,
+      category: null,
     });
 
     await expect(orderService.placeOrder(mockCheckoutInput, [mockCartItem]))
@@ -89,7 +90,8 @@ describe('Order Service Integration Tests', () => {
       images: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      is_archived: false
+      is_archived: false,
+      category: null,
     });
 
     // 2. Mock Order Creation
