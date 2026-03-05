@@ -40,6 +40,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
@@ -340,18 +341,50 @@ export function ProductsTable({ products }: ProductsTableProps) {
                       className={`group hover:bg-neutral-50 transition-colors border-b border-neutral-100 ${product.is_archived ? "opacity-70" : ""}`}
                     >
                       <TableCell className="py-3 pl-4">
-                        <div className="relative w-10 h-10 rounded-md bg-neutral-100 overflow-hidden border border-neutral-200">
-                          <Image
-                            src={
-                              product.images && product.images.length > 0
-                                ? product.images[0]
-                                : "/placeholder-bag.jpg"
-                            }
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                            sizes="40px"
-                          />
+                        <div
+                          className="relative"
+                          onMouseEnter={() => setHoveredImageId(product.id)}
+                          onMouseLeave={() => setHoveredImageId(null)}
+                        >
+                          <div className="relative w-10 h-10 rounded-md bg-neutral-100 overflow-hidden border border-neutral-200 cursor-pointer">
+                            <Image
+                              src={
+                                product.images && product.images.length > 0
+                                  ? product.images[0]
+                                  : "/placeholder-bag.jpg"
+                              }
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                              sizes="40px"
+                            />
+                          </div>
+                          {/* Hover Preview Popup */}
+                          <div
+                            className={`absolute left-12 top-1/2 -translate-y-1/2 z-50 pointer-events-none transition-all duration-200 ease-out ${
+                              hoveredImageId === product.id
+                                ? "opacity-100 scale-100"
+                                : "opacity-0 scale-95"
+                            }`}
+                          >
+                            <div className="relative w-60 h-60 rounded-xl overflow-hidden shadow-2xl border border-neutral-200 bg-white ring-1 ring-black/5">
+                              <Image
+                                src={
+                                  product.images && product.images.length > 0
+                                    ? product.images[0]
+                                    : "/placeholder-bag.jpg"
+                                }
+                                alt={`${product.name} preview`}
+                                fill
+                                className="object-cover"
+                                sizes="240px"
+                              />
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-3">
+                                <p className="text-white text-xs font-medium truncate">{product.name}</p>
+                                <p className="text-white/70 text-[10px]">{product.color}</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
