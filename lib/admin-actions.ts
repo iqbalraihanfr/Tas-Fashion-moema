@@ -238,3 +238,123 @@ export async function updateOrderStatus(formData: FormData) {
   revalidatePath('/admin/dashboard/orders');
   redirect(`/admin/dashboard/orders/${orderId}`);
 }
+
+// =============================================
+// SHOWCASE ACTIONS
+// =============================================
+import * as showcaseService from "@/services/showcase.service";
+
+const showcaseSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
+  subtitle: z.string().nullable().default(null),
+  link_url: z.string().min(1, "Link URL is required"),
+  position: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().positive()),
+  is_active: z.boolean().default(true),
+});
+
+export async function createShowcase(formData: FormData) {
+  const title = formData.get("title") as string;
+  const subtitleRaw = formData.get("subtitle") as string;
+  const subtitle = subtitleRaw || null;
+  const link_url = formData.get("link_url") as string;
+  const position = formData.get("position") as string;
+  const is_active = formData.get("is_active") === "true";
+  const image = formData.get("image") as File;
+
+  const parsed = showcaseSchema.safeParse({
+    title,
+    subtitle,
+    link_url,
+    position,
+    is_active,
+  });
+
+  if (!parsed.success) {
+    throw new Error("Invalid showcase data: " + parsed.error.issues[0].message);
+  }
+
+  if (!image || image.size === 0) {
+    throw new Error("Showcase image is required.");
+  }
+
+  try {
+    await showcaseService.createShowcase({
+      title: parsed.data.title,
+      subtitle: parsed.data.subtitle,
+      link_url: parsed.data.link_url,
+      position: parsed.data.position,
+      is_active: parsed.data.is_active,
+      image,
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error("Failed to create showcase.");
+  }
+
+  revalidatePath('/admin/dashboard/showcase');
+  revalidatePath('/');
+  redirect('/admin/dashboard/showcase');
+}
+
+export async function updateShowcase(formData: FormData) {
+  const id = formData.get("id") as string;
+  const title = formData.get("title") as string;
+  const subtitleRaw = formData.get("subtitle") as string;
+  const subtitle = subtitleRaw || null;
+  const link_url = formData.get("link_url") as string;
+  const position = formData.get("position") as string;
+  const is_active = formData.get("is_active") === "true";
+  const image = formData.get("image") as File | null;
+
+  const parsed = showcaseSchema.safeParse({
+    id,
+    title,
+    subtitle,
+    link_url,
+    position,
+    is_active,
+  });
+
+  if (!parsed.success) {
+    throw new Error("Invalid showcase data: " + parsed.error.issues[0].message);
+  }
+
+  try {
+    await showcaseService.updateShowcase({
+      id: parsed.data.id!,
+      title: parsed.data.title,
+      subtitle: parsed.data.subtitle,
+      link_url: parsed.data.link_url,
+      position: parsed.data.position,
+      is_active: parsed.data.is_active,
+      image: image && image.size > 0 ? image : undefined,
+    });
+  } catch (error) {
+    console.error(error);
+    throw new Error("Failed to update showcase.");
+  }
+
+  revalidatePath('/admin/dashboard/showcase');
+  revalidatePath('/');
+  redirect('/admin/dashboard/showcase');
+}
+
+export async function deleteShowcase(prevState: unknown, formData: FormData) {
+  const id = formData.get("showcaseId") as string;
+
+  if (!id) {
+    return { error: "Showcase ID is missing." };
+  }
+
+  try {
+    await showcaseService.deleteShowcase(id);
+  } catch (error) {
+    console.error(error);
+    return { error: "Failed to delete showcase." };
+  }
+
+  revalidatePath('/admin/dashboard/showcase');
+  revalidatePath('/');
+  return { success: true };
+}

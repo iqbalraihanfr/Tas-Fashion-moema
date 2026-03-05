@@ -3,13 +3,18 @@ import ProductCard from "@/components/ui/product-card";
 import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import * as showcaseService from "@/services/showcase.service";
 
 export default async function Home() {
-  const { data: newArrivals, error } = await supabase
-    .from('Product')
-    .select('id, name, slug, price, images')
-    .order('createdAt', { ascending: false })
-    .limit(8);
+  const [{ data: newArrivals, error }, showcases] = await Promise.all([
+    supabase
+      .from('Product')
+      .select('id, name, slug, price, images')
+      .eq('is_archived', false)
+      .order('createdAt', { ascending: false })
+      .limit(8),
+    showcaseService.getActiveShowcases(),
+  ]);
 
   if (error) {
     console.error("Error fetching new arrivals:", error);
@@ -51,37 +56,41 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* CATEGORY GRID - BAGS ONLY */}
-      <section className="container">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative aspect-[4/3] md:aspect-auto md:h-[600px] bg-muted group overflow-hidden">
-            <Image src="/bag-1.jpg" alt="Work Bags" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
-            <div className="absolute bottom-10 left-10 text-white">
-              <h2 className="text-2xl font-bold uppercase tracking-widest mb-2">Work Bags</h2>
-              <Link href="/catalog?category=totes" className="text-xs font-bold border-b border-white pb-1 uppercase tracking-wider hover:text-gray-200 hover:border-gray-200 transition-colors">Shop Now</Link>
-            </div>
-          </div>
-          <div className="grid grid-rows-2 gap-4">
-             <div className="relative bg-muted group overflow-hidden">
-                <Image src="/bag-2.jpg" alt="Evening Clutches" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
-                <div className="absolute bottom-8 left-8 text-white">
-                  <h2 className="text-xl font-bold uppercase tracking-widest mb-2">Evening Clutches</h2>
-                  <Link href="/catalog?category=clutches" className="text-xs font-bold border-b border-white pb-1 uppercase tracking-wider">Shop Now</Link>
+      {/* CATEGORY GRID - DYNAMIC SHOWCASES */}
+      {showcases.length > 0 && (
+        <section className="container">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* First showcase = large left panel */}
+            {showcases[0] && (
+              <div className="relative aspect-[4/3] md:aspect-auto md:h-[600px] bg-muted group overflow-hidden">
+                <Image src={showcases[0].image_url} alt={showcases[0].title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
+                <div className="absolute bottom-10 left-10 text-white">
+                  <h2 className="text-2xl font-bold uppercase tracking-widest mb-1">{showcases[0].title}</h2>
+                  {showcases[0].subtitle && <p className="text-xs text-white/80 mb-2">{showcases[0].subtitle}</p>}
+                  <Link href={showcases[0].link_url} className="text-xs font-bold border-b border-white pb-1 uppercase tracking-wider hover:text-gray-200 hover:border-gray-200 transition-colors">Shop Now</Link>
                 </div>
-             </div>
-             <div className="relative bg-muted group overflow-hidden">
-                <Image src="/bag-3.jpg" alt="Daily Essentials" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
-                <div className="absolute bottom-8 left-8 text-white">
-                  <h2 className="text-xl font-bold uppercase tracking-widest mb-2">Daily Essentials</h2>
-                  <Link href="/catalog?category=shoulder-bags" className="text-xs font-bold border-b border-white pb-1 uppercase tracking-wider">Shop Now</Link>
-                </div>
-             </div>
+              </div>
+            )}
+            {/* Remaining showcases = stacked right panels */}
+            {showcases.length > 1 && (
+              <div className="grid grid-rows-2 gap-4">
+                {showcases.slice(1, 3).map((item) => (
+                  <div key={item.id} className="relative bg-muted group overflow-hidden">
+                    <Image src={item.image_url} alt={item.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
+                    <div className="absolute bottom-8 left-8 text-white">
+                      <h2 className="text-xl font-bold uppercase tracking-widest mb-1">{item.title}</h2>
+                      {item.subtitle && <p className="text-xs text-white/80 mb-2">{item.subtitle}</p>}
+                      <Link href={item.link_url} className="text-xs font-bold border-b border-white pb-1 uppercase tracking-wider">Shop Now</Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* NEW ARRIVALS */}
       <section className="container">

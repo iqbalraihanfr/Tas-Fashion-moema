@@ -38,3 +38,15 @@ export type OrderItem = {
   quantity: number;
   price: number;
 };
+
+export type Showcase = {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  image_url: string;
+  link_url: string;
+  position: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};

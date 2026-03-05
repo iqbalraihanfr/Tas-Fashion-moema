@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, ShoppingBag, ShoppingCart, LogOut } from "lucide-react"
+import { LayoutDashboard, ShoppingBag, ShoppingCart, ImageIcon, LogOut } from "lucide-react"
 
 import {
   Sidebar,
@@ -22,6 +22,7 @@ import { handleSignOut } from "@/lib/actions"
 const navigation = [
   { name: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Products", href: "/admin/dashboard/products", icon: ShoppingBag },
+  { name: "Showcase", href: "/admin/dashboard/showcase", icon: ImageIcon },
   { name: "Orders", href: "/admin/dashboard/orders", icon: ShoppingCart },
 ]
 
