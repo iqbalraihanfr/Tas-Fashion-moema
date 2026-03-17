@@ -28,6 +28,7 @@ const PRODUCT_CATEGORIES = [
   "Mini Bags",
   "Clutches",
   "Backpacks",
+  "Sale",
 ] as const;
 
 const productSchema = z.object({
@@ -68,7 +69,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
   // Track compressed files ready for upload
   const [compressedFiles, setCompressedFiles] = useState<File[]>([]);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Crop state
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -241,6 +242,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
   }, []);
 
   const onSubmit = async (data: ProductFormData) => {
+    setErrorMsg(null);
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("baseName", data.baseName);
@@ -266,21 +268,19 @@ export function ProductForm({ initialData }: ProductFormProps) {
       formData.append("existingImages", JSON.stringify(keptExistingImages));
     }
 
-    setSubmitError(null);
     try {
-      if (isEditMode) {
-        await updateProduct(formData);
+      const result = isEditMode 
+        ? await updateProduct(formData) 
+        : await createProduct(formData);
+      
+      if (result.success) {
+        window.location.href = '/admin/dashboard/products';
       } else {
-        await createProduct(formData);
+        setErrorMsg(result.error || "An error occurred while saving the product.");
       }
     } catch (error) {
       console.error("Form submission error", error);
-      const message = error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan produk.";
-      if (message.includes("Body exceeded") || message.includes("body size")) {
-        setSubmitError("Ukuran gambar terlalu besar. Coba kurangi jumlah gambar atau gunakan gambar dengan resolusi lebih kecil.");
-      } else {
-        setSubmitError(message);
-      }
+      setErrorMsg("Failed to connect to the server. Please try again.");
     }
   };
 
@@ -308,6 +308,12 @@ export function ProductForm({ initialData }: ProductFormProps) {
     )}
 
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-12 pb-20">
+      {errorMsg && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700 font-medium animate-in fade-in duration-300">
+          {errorMsg}
+        </div>
+      )}
+
       {/* SECTION 1: BASIC INFORMATION */}
       <div className="space-y-6">
         <div className="border-b pb-2">
@@ -364,7 +370,6 @@ export function ProductForm({ initialData }: ProductFormProps) {
                 <p className="text-xs text-muted-foreground">Assign a category to display on the buyer-facing catalog.</p>
             </div>
         </div>
-
       </div>
 
       {/* SECTION 2: DETAILS & PRICING */}
@@ -520,12 +525,6 @@ export function ProductForm({ initialData }: ProductFormProps) {
         </div>
         {errors.images && <p className="text-red-500 text-xs font-medium">{errors.images.message}</p>}
       </div>
-
-      {submitError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
-          {submitError}
-        </div>
-      )}
 
       <div className="pt-6 border-t flex justify-end gap-4">
         <Button 

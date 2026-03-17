@@ -1,11 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import * as productService from "@/services/product.service";
 import * as orderService from "@/services/order.service";
-import { AppError } from "@/lib/errors";
 
 // Zod schema for product validation
 const productSchema = z.object({
@@ -58,7 +56,8 @@ export async function createProduct(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error("Invalid product data: " + parsed.error.issues[0].message);
+    const errorMsg = parsed.error.issues[0].message || "Invalid product data";
+    return { success: false, error: errorMsg };
   }
 
   try {
@@ -74,15 +73,15 @@ export async function createProduct(formData: FormData) {
       stock: parsed.data.stock,
       images: parsed.data.newImages || [],
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    throw new Error("Failed to create product.");
+    return { success: false, error: error.message || "Failed to create product." };
   }
 
   revalidatePath('/admin/dashboard/products');
   revalidatePath('/catalog');
   revalidatePath('/');
-  redirect('/admin/dashboard/products');
+  return { success: true };
 }
 
 export async function updateProduct(formData: FormData) {
@@ -118,7 +117,8 @@ export async function updateProduct(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error("Invalid product data: " + parsed.error.issues[0].message);
+    const errorMsg = parsed.error.issues[0].message || "Invalid product data";
+    return { success: false, error: errorMsg };
   }
 
   try {
@@ -136,14 +136,16 @@ export async function updateProduct(formData: FormData) {
       images: parsed.data.newImages || [],
       existingImages: parsed.data.existingImages,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    throw new Error("Failed to update product.");
+    return { success: false, error: error.message || "Failed to update product." };
   }
 
   revalidatePath('/admin/dashboard/products');
   revalidatePath('/catalog');
-  redirect('/admin/dashboard/products');
+  const productSlug = parsed.data.name.toLowerCase().replace(/ /g, '-'); // Simple slug fallback
+  revalidatePath(`/product/${productSlug}`);
+  return { success: true };
 }
 
 export async function deleteProduct(prevState: unknown, formData: FormData) {
@@ -220,7 +222,7 @@ export async function updateOrderStatus(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error("Invalid order status data: " + parsed.error.issues[0].message);
+    return { success: false, error: "Invalid order status data: " + parsed.error.issues[0].message };
   }
 
   try {
@@ -229,14 +231,14 @@ export async function updateOrderStatus(formData: FormData) {
       shippingStatus: parsed.data.shippingStatus,
       trackingNumber: parsed.data.trackingNumber ?? null,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    throw new Error("Failed to update order status.");
+    return { success: false, error: error.message || "Failed to update order status." };
   }
 
   revalidatePath(`/admin/dashboard/orders/${orderId}`);
   revalidatePath('/admin/dashboard/orders');
-  redirect(`/admin/dashboard/orders/${orderId}`);
+  return { success: true };
 }
 
 // =============================================
@@ -271,11 +273,11 @@ export async function createShowcase(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error("Invalid showcase data: " + parsed.error.issues[0].message);
+    return { success: false, error: "Invalid showcase data: " + parsed.error.issues[0].message };
   }
 
   if (!image || image.size === 0) {
-    throw new Error("Showcase image is required.");
+    return { success: false, error: "Showcase image is required." };
   }
 
   try {
@@ -287,14 +289,14 @@ export async function createShowcase(formData: FormData) {
       is_active: parsed.data.is_active,
       image,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    throw new Error("Failed to create showcase.");
+    return { success: false, error: error.message || "Failed to create showcase." };
   }
 
   revalidatePath('/admin/dashboard/showcase');
   revalidatePath('/');
-  redirect('/admin/dashboard/showcase');
+  return { success: true };
 }
 
 export async function updateShowcase(formData: FormData) {
@@ -317,7 +319,7 @@ export async function updateShowcase(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error("Invalid showcase data: " + parsed.error.issues[0].message);
+    return { success: false, error: "Invalid showcase data: " + parsed.error.issues[0].message };
   }
 
   try {
@@ -330,14 +332,14 @@ export async function updateShowcase(formData: FormData) {
       is_active: parsed.data.is_active,
       image: image && image.size > 0 ? image : undefined,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    throw new Error("Failed to update showcase.");
+    return { success: false, error: error.message || "Failed to update showcase." };
   }
 
   revalidatePath('/admin/dashboard/showcase');
   revalidatePath('/');
-  redirect('/admin/dashboard/showcase');
+  return { success: true };
 }
 
 export async function deleteShowcase(prevState: unknown, formData: FormData) {
