@@ -432,7 +432,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {imagePreviews.map((preview, index) => (
-            <div key={preview.id} className="relative group aspect-[3/4] bg-muted rounded-md overflow-hidden border border-border">
+            <div key={preview.id} className="relative group aspect-3/4 bg-muted rounded-md overflow-hidden border border-border">
               <Image 
                 src={preview.previewUrl} 
                 alt={`Product Image ${index + 1}`} 
@@ -484,7 +484,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
 
               {/* Size Info on Hover - Only for new images */}
               {!preview.isExisting && preview.compressedSize && (
-                <div className="absolute bottom-0 left-0 right-0 py-2 px-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute bottom-0 left-0 right-0 py-2 px-2 bg-linear-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="text-white text-[10px] text-center font-medium">
                     <span className="line-through opacity-70">{formatFileSize(preview.originalSize)}</span>
                     <span className="mx-1">→</span>
@@ -497,7 +497,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
 
           {/* Upload Button */}
           <label className={`
-            flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-muted-foreground/25 rounded-md
+            flex flex-col items-center justify-center aspect-3/4 border-2 border-dashed border-muted-foreground/25 rounded-md
             cursor-pointer hover:bg-muted/50 hover:border-muted-foreground/50 transition-colors group
             ${isCompressing ? "pointer-events-none opacity-50" : ""}
           `}>
