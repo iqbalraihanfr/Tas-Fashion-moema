@@ -16,12 +16,48 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.moemacollection.com"),
   title: {
     template: "%s | MOEMA - Modern Leather Atelier",
     default: "MOEMA - Modern Leather Atelier",
   },
-  description: "Discover luxury branded bags and modern sculpture with MOEMA.",
+  description: "Discover luxury branded bags and modern sculpture with MOEMA. Handcrafted leather goods for the contemporary woman.",
+  keywords: ["luxury bags", "leather atelier", "designer handbags", "modern sculpture", "MOEMA"],
+  authors: [{ name: "MOEMA" }],
+  creator: "MOEMA",
+  publisher: "MOEMA",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://www.moemacollection.com",
+    siteName: "MOEMA",
+    title: "MOEMA - Modern Leather Atelier",
+    description: "Discover luxury branded bags and modern sculpture with MOEMA.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "MOEMA - Modern Leather Atelier",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MOEMA - Modern Leather Atelier",
+    description: "Discover luxury branded bags and modern sculpture with MOEMA.",
+    images: ["/og-image.png"],
+    creator: "@moemacollection",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
+
 
 export default function RootLayout({
   children,
