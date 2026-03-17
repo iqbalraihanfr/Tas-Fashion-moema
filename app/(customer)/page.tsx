@@ -26,9 +26,28 @@ export default async function Home() {
   const hero = showcases.find((s) => s.position === 0);
   const categoryShowcases = showcases.filter((s) => s.position !== 0);
 
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "MOEMA",
+    "url": "https://www.moemacollection.com",
+    "logo": "https://www.moemacollection.com/MOEMA-Logo.png",
+    "sameAs": [
+      "https://www.instagram.com/moemacollection",
+      "https://www.facebook.com/moemacollection",
+      "https://twitter.com/moemacollection"
+    ],
+    "description": "Discover luxury branded bags and modern sculpture with MOEMA."
+  };
+
   return (
     <div className="space-y-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
       {/* HERO JUMBOTRON — fills viewport minus navbar */}
+
       {hero && (
         <section
           className="relative w-full bg-cover bg-center bg-no-repeat overflow-hidden"
@@ -37,7 +56,7 @@ export default async function Home() {
             height: "calc(100dvh - 80px)",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
           <div className="relative h-full flex items-end">
             <div className="px-8 md:px-16 pb-16 md:pb-20">
               {hero.subtitle && (
@@ -65,7 +84,7 @@ export default async function Home() {
             height: "calc(100dvh - 80px)",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
           <div className="relative h-full flex items-end">
             <div className="px-8 md:px-16 pb-16 md:pb-20">
               <span className="text-xs font-bold tracking-[0.3em] uppercase mb-4 block text-white/70">Spring Summer 2025</span>
@@ -86,7 +105,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* First category = large left panel */}
             {categoryShowcases[0] && (
-              <div className="relative aspect-[4/3] md:aspect-auto md:h-[600px] bg-muted group overflow-hidden">
+              <div className="relative aspect-4/3 md:aspect-auto md:h-[600px] bg-muted group overflow-hidden">
                 <Image src={categoryShowcases[0].image_url} alt={categoryShowcases[0].title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
                 <div className="absolute bottom-10 left-10 text-white">
