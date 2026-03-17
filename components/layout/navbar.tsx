@@ -22,6 +22,7 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isNavHidden, setIsNavHidden] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const lastScrollY = useRef(0);
   const headerRef = useRef<HTMLElement>(null);
   const router = useRouter();
@@ -64,6 +65,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -176,30 +178,32 @@ export default function Navbar() {
           <div className="container grid grid-cols-3 h-20 items-center">
             {/* Mobile Menu & Search (Left) */}
             <div className="flex items-center gap-4 md:hidden">
-              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="-ml-2">
-                    <Menu className="h-5 w-5" strokeWidth={1.5} />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
-                  <SheetHeader className="p-6 border-b border-border text-left">
-                    <SheetTitle className="text-xl font-bold tracking-[0.15em] uppercase text-[#111111]">MOEMA</SheetTitle>
-                  </SheetHeader>
-                  <div className="flex flex-col py-4">
-                    {navItems.map((item) => (
-                      <Link
-                        key={item}
-                        href={`/catalog?category=${item.toLowerCase().replace(" ", "-")}`}
-                        className="px-6 py-4 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/50 last:border-0"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        {item}
-                      </Link>
-                    ))}
-                  </div>
-                </SheetContent>
-              </Sheet>
+              {mounted && (
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="-ml-2">
+                      <Menu className="h-5 w-5" strokeWidth={1.5} />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
+                    <SheetHeader className="p-6 border-b border-border text-left">
+                      <SheetTitle className="text-xl font-bold tracking-[0.15em] uppercase text-[#111111]">MOEMA</SheetTitle>
+                    </SheetHeader>
+                    <div className="flex flex-col py-4">
+                      {navItems.map((item) => (
+                        <Link
+                          key={item}
+                          href={`/catalog?category=${item.toLowerCase().replace(" ", "-")}`}
+                          className="px-6 py-4 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/50 last:border-0"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          {item}
+                        </Link>
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
 
               <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(!isSearchOpen)}>
                 <Search className="h-5 w-5" strokeWidth={1.5} />
@@ -320,8 +324,6 @@ export default function Navbar() {
           )}
         </div>
       </header>
-
-
     </>
   );
 }
