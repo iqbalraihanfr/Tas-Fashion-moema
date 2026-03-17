@@ -50,7 +50,7 @@ export default function TermsAndConditionsPage() {
 
       <div className="mt-16 pt-8 border-t">
         <Link href="/" className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
-          Return to Atelier
+          Return to Moema Collection
         </Link>
       </div>
     </div>
