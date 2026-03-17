@@ -26,10 +26,10 @@ export default function Footer() {
                     designed for the contemporary woman.
                 </p>
                 <div className="flex gap-4">
-                    <Link href="#" className="hover:text-[#89801D] transition-colors"><Instagram className="w-5 h-5" /></Link>
-                    <Link href="#" className="hover:text-[#89801D] transition-colors"><Facebook className="w-5 h-5" /></Link>
-                    <Link href="#" className="hover:text-[#89801D] transition-colors"><Youtube className="w-5 h-5" /></Link>
-                    <Link href="#" className="hover:text-[#89801D] transition-colors"><Twitter className="w-5 h-5" /></Link>
+                    <Link href="#" className="hover:text-moema-dark transition-colors"><Instagram className="w-5 h-5" /></Link>
+                    <Link href="#" className="hover:text-moema-dark transition-colors"><Facebook className="w-5 h-5" /></Link>
+                    <Link href="#" className="hover:text-moema-dark transition-colors"><Youtube className="w-5 h-5" /></Link>
+                    <Link href="#" className="hover:text-moema-dark transition-colors"><Twitter className="w-5 h-5" /></Link>
                 </div>
             </div>
 
@@ -44,7 +44,7 @@ export default function Footer() {
                         placeholder="ENTER YOUR EMAIL ADDRESS" 
                         className="bg-transparent w-full outline-none text-sm placeholder:text-gray-500 uppercase tracking-wide text-white"
                     />
-                    <button type="submit" className="text-xs font-bold uppercase tracking-widest hover:text-[#89801D] transition-colors">
+                    <button type="submit" className="text-xs font-bold uppercase tracking-widest hover:text-moema-dark transition-colors">
                         Subscribe
                     </button>
                 </form>
@@ -94,9 +94,9 @@ export default function Footer() {
           <div>
              <h4 className="text-xs font-bold uppercase tracking-widest mb-6 text-gray-300">Legal area</h4>
              <ul className="space-y-3 text-sm text-gray-400">
-              <li><Link href="#" className="hover:text-white transition-colors">Terms & Conditions</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link href="#" className="hover:text-white transition-colors">Cookie Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/cookie-policy" className="hover:text-white transition-colors">Cookie Policy</Link></li>
             </ul>
           </div>
         </div>
