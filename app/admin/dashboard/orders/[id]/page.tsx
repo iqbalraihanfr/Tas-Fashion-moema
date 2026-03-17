@@ -163,7 +163,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       {/* Update Status Form */}
       <div className="bg-background rounded-xl border shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-6">Update Order Status</h2>
-        <form action={updateOrderStatus} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form action={async (formData) => { "use server"; await updateOrderStatus(formData); }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <input type="hidden" name="orderId" value={typedOrder.id} />
           
           <div className="space-y-2">

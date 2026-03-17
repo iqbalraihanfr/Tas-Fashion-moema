@@ -208,7 +208,7 @@ export async function unarchiveProduct(prevState: unknown, formData: FormData) {
   return { success: true };
 }
 
-export async function updateOrderStatus(formData: FormData) {
+export async function updateOrderStatus(formData: FormData): Promise<void> {
   const orderId = formData.get("orderId") as string;
   const paymentStatus = formData.get("paymentStatus") as string;
   const shippingStatus = formData.get("shippingStatus") as string;
@@ -222,7 +222,8 @@ export async function updateOrderStatus(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { success: false, error: "Invalid order status data: " + parsed.error.issues[0].message };
+    console.error("Invalid order status data:", parsed.error.issues[0].message);
+    return;
   }
 
   try {
@@ -232,13 +233,12 @@ export async function updateOrderStatus(formData: FormData) {
       trackingNumber: parsed.data.trackingNumber ?? null,
     });
   } catch (error: any) {
-    console.error(error);
-    return { success: false, error: error.message || "Failed to update order status." };
+    console.error("Failed to update order status:", error);
+    return;
   }
 
   revalidatePath(`/admin/dashboard/orders/${orderId}`);
   revalidatePath('/admin/dashboard/orders');
-  return { success: true };
 }
 
 // =============================================
