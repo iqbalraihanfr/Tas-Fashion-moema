@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
 import QueryProvider from "@/components/providers/query-provider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { CookieConsent } from "@/components/layout/cookie-consent";
 import "./globals.css";
 
 const inter = Inter({
@@ -72,6 +73,7 @@ export default function RootLayout({
             {children}
           </QueryProvider>
         </NuqsAdapter>
+        <CookieConsent />
       </body>
     </html>
   );
