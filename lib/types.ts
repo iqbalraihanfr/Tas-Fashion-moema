@@ -16,6 +16,21 @@ export type Product = {
   updatedAt: string;
 };
 
+export type ProductVariant = {
+  id: string;
+  slug: string;
+  color: string;
+  price: number;
+  images: string[];
+  stock: number;
+};
+
+export type ProductGroup = {
+  baseName: string;
+  category: string | null;
+  variants: ProductVariant[]; // order follows the originating query's sort
+};
+
 export type Order = {
   id: string;
   customerName: string;
