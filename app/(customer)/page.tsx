@@ -4,11 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import * as showcaseService from "@/services/showcase.service";
+import { getAllColors, colorsToMap } from "@/services/database/color.repository";
 import { groupProductsByBaseName } from "@/lib/product-utils";
 import type { Product } from "@/lib/types";
 
 export default async function Home() {
-  const [{ data: newArrivals, error }, showcases] = await Promise.all([
+  const [{ data: newArrivals, error }, showcases, colors] = await Promise.all([
     supabase
       .from('Product')
       .select('*')
@@ -16,7 +17,10 @@ export default async function Home() {
       .order('createdAt', { ascending: false })
       .limit(8),
     showcaseService.getActiveShowcases(),
+    getAllColors(),
   ]);
+
+  const colorMap = colorsToMap(colors);
 
   if (error) {
     console.error("Error fetching new arrivals:", error);
@@ -152,7 +156,7 @@ export default async function Home() {
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-10">
           {productGroups.map((group) => (
-            <ProductCard key={group.baseName} group={group} />
+            <ProductCard key={group.baseName} group={group} colorMap={colorMap} />
           ))}
         </div>
         

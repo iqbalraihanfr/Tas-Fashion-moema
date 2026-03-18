@@ -8,9 +8,10 @@ import { ProductGroup } from "@/lib/types";
 
 interface ProductCardProps {
   group: ProductGroup;
+  colorMap?: Record<string, string>;
 }
 
-export default function ProductCard({ group }: ProductCardProps) {
+export default function ProductCard({ group, colorMap }: ProductCardProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeVariant = group.variants[activeIndex];
 
@@ -68,7 +69,7 @@ export default function ProductCard({ group }: ProductCardProps) {
                     ? "h-3 w-3 border-foreground ring-2 ring-foreground ring-offset-1"
                     : "h-2.5 w-2.5 border-gray-300 hover:scale-110"
                 }`}
-                style={{ backgroundColor: colorToHex(variant.color) }}
+                style={{ backgroundColor: colorMap ? (colorMap[variant.color] ?? '#d4c4b7') : colorToHex(variant.color) }}
               />
             ))}
           </div>

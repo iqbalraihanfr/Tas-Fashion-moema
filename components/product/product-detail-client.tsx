@@ -15,9 +15,10 @@ interface ProductDetailClientProps {
   product: Product;
   recommendedProducts: Product[];
   colorVariants: ProductVariant[];
+  colorMap?: Record<string, string>;
 }
 
-export function ProductDetailClient({ product, recommendedProducts, colorVariants }: ProductDetailClientProps) {
+export function ProductDetailClient({ product, recommendedProducts, colorVariants, colorMap }: ProductDetailClientProps) {
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { addItem } = useCart();
@@ -160,7 +161,7 @@ export function ProductDetailClient({ product, recommendedProducts, colorVariant
               <div className="flex gap-3">
                 {colorVariants.map((variant) => {
                   const isActive = variant.slug === product.slug;
-                  const hex = colorToHex(variant.color);
+                  const hex = colorMap ? (colorMap[variant.color] ?? '#d4c4b7') : colorToHex(variant.color);
                   const isDark = hex < "#888888";
                   return (
                     <Link

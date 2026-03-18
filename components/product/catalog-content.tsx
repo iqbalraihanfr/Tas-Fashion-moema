@@ -13,9 +13,10 @@ const NAV_ITEMS = ["New Arrivals", "Totes", "Shoulder Bags", "Crossbody", "Mini 
 interface CatalogContentProps {
   productGroups: ProductGroup[];
   title: string;
+  colorMap?: Record<string, string>;
 }
 
-export function CatalogContent({ productGroups, title }: CatalogContentProps) {
+export function CatalogContent({ productGroups, title, colorMap }: CatalogContentProps) {
   const [columns, setColumns] = useState(4);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -88,7 +89,7 @@ export function CatalogContent({ productGroups, title }: CatalogContentProps) {
           ) : (
             <div className={`grid ${gridClass} gap-x-4 gap-y-10`}>
               {productGroups.map((group) => (
-                <ProductCard key={group.baseName} group={group} />
+                <ProductCard key={group.baseName} group={group} colorMap={colorMap} />
               ))}
             </div>
           )}

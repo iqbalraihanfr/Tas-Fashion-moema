@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ProductDetailClient } from "@/components/product/product-detail-client";
 import Link from "next/link";
 import { getProductBySlug, getRecommendedProducts, getVariantsByBaseName } from "@/services/database/product.repository";
+import { getAllColors, colorsToMap } from "@/services/database/color.repository";
 import { groupProductsByBaseName } from "@/lib/product-utils";
 import { Metadata } from "next";
 
@@ -60,9 +61,12 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  // Fetch all color variants for this model (same baseName, excluding archived)
-  const allVariants = await getVariantsByBaseName(product.baseName);
+  const [allVariants, colors] = await Promise.all([
+    getVariantsByBaseName(product.baseName),
+    getAllColors(),
+  ]);
   const colorVariants = groupProductsByBaseName(allVariants)[0]?.variants ?? [];
+  const colorMap = colorsToMap(colors);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -101,7 +105,7 @@ export default async function ProductDetailPage({ params }: Props) {
         <span className="text-foreground font-bold">{product.name}</span>
       </div>
 
-      <ProductDetailClient product={product} recommendedProducts={recommendedProducts} colorVariants={colorVariants} />
+      <ProductDetailClient product={product} recommendedProducts={recommendedProducts} colorVariants={colorVariants} colorMap={colorMap} />
     </div>
   );
 }
