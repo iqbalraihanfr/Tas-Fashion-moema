@@ -1,6 +1,8 @@
 import { ProductForm } from "@/components/admin/product-form";
-import { supabaseAdmin } from "@/lib/supabase"; // Import supabaseAdmin
-import { Product } from "@/lib/types"; // Import Product type
+import { getUniqueBaseNames } from "@/services/database/product.repository";
+import { getAllColors } from "@/services/database/color.repository";
+import { supabaseAdmin } from "@/lib/supabase";
+import { Product } from "@/lib/types";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -8,19 +10,17 @@ import { ArrowLeft } from "lucide-react";
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // Fetch product data using supabaseAdmin
-  const { data: product, error } = await supabaseAdmin
-    .from('Product')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const [existingBaseNames, colors, { data: product, error }] = await Promise.all([
+    getUniqueBaseNames(),
+    getAllColors(),
+    supabaseAdmin.from('Product').select('*').eq('id', id).single(),
+  ]);
 
   if (error || !product) {
     console.error("Error fetching product for edit:", error);
     return <div className="text-center py-10 text-muted-foreground">Product not found or error fetching data.</div>;
   }
 
-  // Cast to Product type if needed, as Supabase returns generic object
   const initialData: Product = {
     id: product.id,
     name: product.name,
@@ -29,7 +29,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     price: product.price,
     stock: product.stock,
     images: product.images,
-    baseName: product.base_name || product.name, // Handle snake_case from DB if needed, or camelCase
+    baseName: product.base_name || product.name,
     sku: product.sku,
     color: product.color,
     dimensions: product.dimensions,
@@ -52,9 +52,9 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           <p className="text-sm text-muted-foreground font-mono">{initialData.name}</p>
         </div>
       </div>
-      
+
       <div className="bg-background rounded-xl border shadow-sm p-6">
-        <ProductForm initialData={initialData} />
+        <ProductForm initialData={initialData} existingBaseNames={existingBaseNames} colors={colors} />
       </div>
     </div>
   );

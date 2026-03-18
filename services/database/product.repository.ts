@@ -58,6 +58,24 @@ export async function getAllProducts(filter: ProductFilter = {}): Promise<Produc
   return products as Product[];
 }
 
+export async function getUniqueBaseNames(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('Product')
+    .select('baseName')
+    .eq('is_archived', false)
+    .order('baseName', { ascending: true });
+
+  if (error) {
+    console.error("Repository Error [getUniqueBaseNames]:", error);
+    return [];
+  }
+
+  const seen = new Set<string>();
+  return (data as { baseName: string }[])
+    .map((r) => r.baseName)
+    .filter((n) => n && !seen.has(n) && seen.add(n));
+}
+
 export async function getVariantsByBaseName(baseName: string): Promise<Product[]> {
   const { data, error } = await supabase
     .from('Product')

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import { UploadCloud, XCircle, Info, CheckCircle2, Loader2, Crop } from "lucide-react";
 import { createProduct, updateProduct } from "@/lib/admin-actions";
-import { COLOR_NAMES } from "@/lib/color-map";
+import type { ColorEntry } from "@/services/database/color.repository";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,9 +49,11 @@ type ProductFormData = z.infer<typeof productSchema>;
 
 type ProductFormProps = {
   initialData?: Product;
+  existingBaseNames?: string[];
+  colors?: ColorEntry[];
 };
 
-export function ProductForm({ initialData }: ProductFormProps) {
+export function ProductForm({ initialData, existingBaseNames = [], colors = [] }: ProductFormProps) {
   const isEditMode = !!initialData;
   
   // Track image previews with compression status
@@ -104,6 +106,15 @@ export function ProductForm({ initialData }: ProductFormProps) {
   });
 
   const currentImages = watch("images");
+  const watchedBaseName = watch("baseName");
+  const watchedColor = watch("color");
+
+  // Auto-derive product name from baseName + color
+  useEffect(() => {
+    if (watchedBaseName && watchedColor) {
+      setValue("name", `${watchedBaseName} ${watchedColor}`, { shouldValidate: false });
+    }
+  }, [watchedBaseName, watchedColor, setValue]);
 
   const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -324,14 +335,37 @@ export function ProductForm({ initialData }: ProductFormProps) {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium">Full Product Name</Label>
-                <Input id="name" {...register("name")} className="h-10" placeholder="e.g. Joanna Gray Leather Tote" />
-                {errors.name && <p className="text-red-500 text-xs font-medium">{errors.name.message}</p>}
+                <Label htmlFor="baseName" className="text-sm font-medium">Model Name</Label>
+                <Input
+                  id="baseName"
+                  {...register("baseName")}
+                  list="basename-suggestions"
+                  className="h-10"
+                  placeholder="e.g. Joanna"
+                  autoComplete="off"
+                />
+                {existingBaseNames.length > 0 && (
+                  <datalist id="basename-suggestions">
+                    {existingBaseNames.map((n) => (
+                      <option key={n} value={n} />
+                    ))}
+                  </datalist>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  The model name shared across all color variants (e.g. &quot;Joanna&quot; for Joanna Black, Joanna Cream, etc.).
+                </p>
+                {errors.baseName && <p className="text-red-500 text-xs font-medium">{errors.baseName.message}</p>}
             </div>
             <div className="space-y-2">
-                <Label htmlFor="baseName" className="text-sm font-medium">Model / Base Name</Label>
-                <Input id="baseName" {...register("baseName")} className="h-10" placeholder="e.g. Joanna" />
-                {errors.baseName && <p className="text-red-500 text-xs font-medium">{errors.baseName.message}</p>}
+                <Label className="text-sm font-medium">Full Product Name</Label>
+                <div className={`h-10 flex items-center px-3 rounded-md border text-sm ${watchedBaseName && watchedColor ? 'bg-muted text-foreground font-medium' : 'bg-muted/50 text-muted-foreground'}`}>
+                  {watchedBaseName && watchedColor
+                    ? `${watchedBaseName} ${watchedColor}`
+                    : 'Auto-filled from Model Name + Color'}
+                </div>
+                <input type="hidden" {...register("name")} />
+                <p className="text-xs text-muted-foreground">Auto-generated — no manual entry needed.</p>
+                {errors.name && <p className="text-red-500 text-xs font-medium">{errors.name.message}</p>}
             </div>
         </div>
 
@@ -341,21 +375,38 @@ export function ProductForm({ initialData }: ProductFormProps) {
                 <Input id="sku" {...register("sku")} className="h-10" placeholder="e.g. Y1886" />
                 {errors.sku && <p className="text-red-500 text-xs font-medium">{errors.sku.message}</p>}
             </div>
-            <div className="space-y-2">
-                <Label htmlFor="color" className="text-sm font-medium">Color Variant</Label>
-                <Input
-                  id="color"
-                  {...register("color")}
-                  list="color-suggestions"
-                  className="h-10"
-                  placeholder="e.g. Gray"
-                  autoComplete="off"
-                />
-                <datalist id="color-suggestions">
-                  {COLOR_NAMES.map((name) => (
-                    <option key={name} value={name} />
-                  ))}
-                </datalist>
+            <div className="space-y-2 md:col-span-2">
+                <Label className="text-sm font-medium">
+                  Color Variant
+                  {watchedColor && (
+                    <span className="ml-2 font-normal text-muted-foreground">— {watchedColor}</span>
+                  )}
+                </Label>
+                <input type="hidden" {...register("color")} />
+                {colors.length === 0 && (
+                  <p className="text-xs text-amber-600">
+                    No colors found. <a href="/admin/dashboard/colors" className="underline">Add colors first</a>.
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {colors.map(({ name: colorName, hex }) => {
+                    const isSelected = watchedColor === colorName;
+                    return (
+                      <button
+                        key={colorName}
+                        type="button"
+                        title={colorName}
+                        onClick={() => setValue("color", colorName, { shouldValidate: true })}
+                        className={`h-8 w-8 rounded-full border-2 transition-all shrink-0 flex items-center justify-center ${
+                          isSelected
+                            ? 'border-foreground ring-2 ring-offset-2 ring-foreground scale-110'
+                            : 'border-gray-300 hover:scale-110 hover:border-gray-500'
+                        }`}
+                        style={{ backgroundColor: hex }}
+                      />
+                    );
+                  })}
+                </div>
                 {errors.color && <p className="text-red-500 text-xs font-medium">{errors.color.message}</p>}
             </div>
             <div className="space-y-2">
