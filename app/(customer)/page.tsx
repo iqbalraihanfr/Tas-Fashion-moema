@@ -4,12 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import * as showcaseService from "@/services/showcase.service";
+import { groupProductsByBaseName } from "@/lib/product-utils";
+import type { Product } from "@/lib/types";
 
 export default async function Home() {
   const [{ data: newArrivals, error }, showcases] = await Promise.all([
     supabase
       .from('Product')
-      .select('id, name, slug, price, images')
+      .select('*')
       .eq('is_archived', false)
       .order('createdAt', { ascending: false })
       .limit(8),
@@ -20,7 +22,8 @@ export default async function Home() {
     console.error("Error fetching new arrivals:", error);
   }
 
-  const products = newArrivals || [];
+  // Cast is safe: no generated Supabase schema types in this project, so newArrivals is any[].
+  const productGroups = groupProductsByBaseName((newArrivals ?? []) as Product[]);
 
   // Separate hero (position 0) from category banners (position 1+)
   const hero = showcases.find((s) => s.position === 0);
@@ -148,8 +151,8 @@ export default async function Home() {
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-10">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {productGroups.map((group) => (
+            <ProductCard key={group.baseName} group={group} />
           ))}
         </div>
         
