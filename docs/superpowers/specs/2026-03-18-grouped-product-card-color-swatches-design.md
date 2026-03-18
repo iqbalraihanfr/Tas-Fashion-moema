@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-18
 **Status:** Approved
-**Scope:** Storefront catalog only — admin is unaffected
+**Scope:** Storefront catalog + homepage — admin is unaffected
 
 ---
 
@@ -14,7 +14,7 @@ Every product card in the catalog shows identical hardcoded color swatches (`bg-
 
 ## Goal
 
-- One card per model (`baseName`) in the catalog grid
+- One card per model (`baseName`) in the catalog grid and homepage "New In" section
 - Color swatches reflect the real variants stored in the database
 - Clicking a swatch switches the card's image and active link to that variant
 - Clicking the card navigates to the currently active variant's product page
@@ -28,11 +28,17 @@ Every product card in the catalog shows identical hardcoded color swatches (`bg-
 
 ```
 CatalogPage (server)
-  → getAllProducts()           # existing, unchanged
-  → groupProductsByBaseName()  # new utility
+  → getAllProducts()            # existing, unchanged
+  → groupProductsByBaseName()   # new utility
   → ProductGroup[]
-      → CatalogContent        # updated interface
-          → ProductCard        # rewritten as client component
+      → CatalogContent          # updated interface
+          → ProductCard          # rewritten as client component
+
+Home (server)
+  → Supabase query (select * instead of partial select)
+  → groupProductsByBaseName()
+  → ProductGroup[]
+      → ProductCard
 ```
 
 ### New Types (`lib/types.ts`)
@@ -50,7 +56,7 @@ export type ProductVariant = {
 export type ProductGroup = {
   baseName: string;
   category: string | null;
-  variants: ProductVariant[];  // ordered by DB insertion (createdAt desc)
+  variants: ProductVariant[]; // order follows the originating query's sort
 };
 ```
 
@@ -85,7 +91,7 @@ export function colorToHex(colorName: string): string {
 }
 ```
 
-When a new color is added via admin, add its entry here. No other code needs to change.
+When a new color is added via admin, add its entry here. No other code changes.
 
 ### `lib/product-utils.ts`
 
@@ -96,15 +102,17 @@ export function groupProductsByBaseName(products: Product[]): ProductGroup[] {
   const map = new Map<string, ProductGroup>();
 
   for (const product of products) {
-    const key = product.baseName;
-    if (!map.has(key)) {
-      map.set(key, {
+    // Guard: skip products without a baseName (data integrity edge case)
+    if (!product.baseName) continue;
+
+    if (!map.has(product.baseName)) {
+      map.set(product.baseName, {
         baseName: product.baseName,
         category: product.category,
         variants: [],
       });
     }
-    map.get(key)!.variants.push({
+    map.get(product.baseName)!.variants.push({
       id: product.id,
       slug: product.slug,
       color: product.color,
@@ -118,7 +126,7 @@ export function groupProductsByBaseName(products: Product[]): ProductGroup[] {
 }
 ```
 
-Pure function, no side effects. Preserves the sort order returned by `getAllProducts()`.
+Pure function, no side effects. Variant order within each group follows the sort of the input array (e.g., `createdAt desc` by default, or `price_asc` when user sorts by price). The default active variant (`activeIndex = 0`) is therefore the most recently added variant in default sort.
 
 ---
 
@@ -136,51 +144,103 @@ return <CatalogContent productGroups={productGroups} title={title} />;
 
 ### `components/product/catalog-content.tsx`
 
-Update the local `Product` interface and prop to accept `productGroups: ProductGroup[]`.
-Map over `productGroups` instead of `products` when rendering the grid.
+Three changes:
+1. **Remove** the local `interface Product` (lines 12–18) — it becomes unused
+2. **Import** `ProductGroup` from `@/lib/types`
+3. **Update** `CatalogContentProps` to `productGroups: ProductGroup[]`
+4. **Update** the grid render to map over `productGroups`:
+   ```tsx
+   {productGroups.map((group) => (
+     <ProductCard key={group.baseName} group={group} />
+   ))}
+   ```
+5. **Update** the empty state guard: `products.length === 0` → `productGroups.length === 0`
+6. **Update** `CatalogToolbar`'s `totalProducts` prop: `products.length` → `productGroups.length` (count reflects distinct models, which is the right number to show shoppers)
+
+### `app/(customer)/page.tsx`
+
+The homepage currently queries only `id, name, slug, price, images`. Change to:
+1. Select `*` (or add `baseName, color` to the select) so grouping has the required fields
+2. Run the result through `groupProductsByBaseName()`
+3. Render `<ProductCard group={group} />` instead of `<ProductCard product={product} />`
 
 ```tsx
-interface CatalogContentProps {
-  productGroups: ProductGroup[];
-  title: string;
-}
-// ...
-{productGroups.map((group) => (
-  <ProductCard key={group.baseName} group={group} />
-))}
+const { data: newArrivals } = await supabase
+  .from('Product')
+  .select('*')
+  .eq('is_archived', false)
+  .order('createdAt', { ascending: false })
+  .limit(8);
+
+const productGroups = groupProductsByBaseName(newArrivals ?? []);
 ```
+
+Note: `.limit(8)` now applies before grouping — the final number of cards shown may be fewer than 8 if multiple variants share a `baseName`. This is acceptable behaviour for "New In".
 
 ### `components/ui/product-card.tsx`
 
-Rewritten as a `'use client'` component. Full behaviour:
+Rewritten as a `'use client'` component accepting `group: ProductGroup`.
 
-- `activeIndex` state (default `0`) selects the active variant
-- Main image: `variants[activeIndex].images[0]`
-- Hover image: `variants[activeIndex].images[1] ?? images[0]`
-- Card `<Link>` navigates to `variants[activeIndex].slug`
+**Props:**
+```ts
+interface ProductCardProps {
+  group: ProductGroup;
+}
+```
+
+**State:**
+```ts
+const [activeIndex, setActiveIndex] = useState(0);
+const activeVariant = group.variants[activeIndex];
+```
+
+**Rendering:**
+- Main image: `activeVariant.images[0] ?? "/placeholder-bag.jpg"`
+- Hover image: `activeVariant.images[1] ?? activeVariant.images[0] ?? "/placeholder-bag.jpg"`
+- Card `<Link>` href: `/product/${activeVariant.slug}`
 - Name: `group.baseName`
-- Price: `variants[activeIndex].price`
-- Color swatches:
-  - Rendered for all variants
-  - **Always visible** (not hidden behind hover) — better UX on mobile
-  - Active swatch: `ring-2 ring-offset-1 ring-foreground` + slightly larger scale
-  - Inactive swatch: standard dot
-  - Tooltip on hover: color name label
-  - Click swatch: `setActiveIndex(i)` — no navigation, only updates card state
-  - Click card image/name: navigates to active variant
+- Price: `activeVariant.price`
+
+**Color swatches:**
+```tsx
+<div className="mt-2 flex justify-center gap-1.5">
+  {group.variants.map((variant, i) => (
+    <button
+      key={variant.id}
+      onClick={(e) => { e.preventDefault(); setActiveIndex(i); }}
+      title={variant.color}  // native tooltip — no TooltipProvider needed
+      className={`rounded-full border transition-all duration-200 ${
+        i === activeIndex
+          ? "h-3 w-3 border-foreground ring-2 ring-foreground ring-offset-1"
+          : "h-2.5 w-2.5 border-gray-300 hover:scale-110"
+      }`}
+      style={{ backgroundColor: colorToHex(variant.color) }}
+    />
+  ))}
+</div>
+```
+
+Key decisions:
+- **Swatches always visible** (no hover-gate) — mobile-first, improves discoverability
+- **Tooltip via HTML `title`** attribute — avoids needing a `TooltipProvider` ancestor in the customer layout
+- **Swatch click does not navigate** — only updates `activeIndex`; navigation happens only when the user clicks the card image or name
+- **`e.preventDefault()`** inside swatch `onClick` prevents the wrapping `<Link>` from firing
 
 ---
 
-## UX Details
+## UX Decisions
 
 | Behaviour | Decision |
 |---|---|
-| Swatches always visible | Yes — mobile-first, discoverability |
-| Swatch click navigates | No — only changes active card state |
-| Card click navigates | Yes — to active variant's slug |
+| Swatches always visible | Yes — better mobile UX |
+| Swatch click navigates | No — updates card state only |
+| Card image/name click navigates | Yes — to active variant's slug |
+| Tooltip implementation | Native `title` attribute |
+| Active swatch indicator | `ring-2 ring-foreground ring-offset-1` + larger size |
+| Default active variant | `index 0` = first returned by query (newest by default) |
 | Quick Add button | Kept as-is (hover reveal) |
 | Image hover effect | Kept — shows `images[1]` of active variant |
-| Out-of-stock indication | Not in scope for this spec |
+| Out-of-stock indication | Out of scope |
 
 ---
 
@@ -200,7 +260,8 @@ Rewritten as a `'use client'` component. Full behaviour:
 | `lib/color-map.ts` | **New** |
 | `lib/product-utils.ts` | **New** |
 | `app/(customer)/catalog/page.tsx` | Edit — add grouping step |
-| `components/product/catalog-content.tsx` | Edit — interface + map over groups |
+| `app/(customer)/page.tsx` | Edit — fetch `*`, group, pass `ProductGroup` |
+| `components/product/catalog-content.tsx` | Edit — remove local interface, update props + map |
 | `components/ui/product-card.tsx` | Edit — client component + swatch logic |
 | `components/admin/*` | **Unchanged** |
 | `services/database/product.repository.ts` | **Unchanged** |
@@ -209,6 +270,6 @@ Rewritten as a `'use client'` component. Full behaviour:
 
 ## Out of Scope
 
-- Out-of-stock swatch dimming
-- Color filter behaviour in catalog (still filters by individual product `color`)
-- Homepage or other uses of `ProductCard` (will be aligned separately if they exist)
+- Out-of-stock swatch dimming / strikethrough
+- Color filter in catalog sidebar (still filters individual product `color` field at DB level)
+- Recommended products section on product detail page (uses `getRecommendedProducts`, separate concern)
