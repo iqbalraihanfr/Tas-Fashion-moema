@@ -167,25 +167,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* NEWSLETTER */}
-      <section className="bg-[#1a1a1a] text-white py-20">
-        <div className="container max-w-2xl text-center">
-           <h3 className="text-2xl font-light uppercase tracking-[0.2em] mb-4">Join the List</h3>
-           <p className="text-sm text-gray-400 mb-8 leading-relaxed">
-             Sign up to receive updates on new arrivals, exclusive access to sales, and style inspiration.
-           </p>
-           <form className="flex flex-col sm:flex-row gap-4">
-             <input 
-               type="email" 
-               placeholder="EMAIL ADDRESS" 
-               className="flex-1 bg-transparent border-b border-gray-600 py-3 text-sm placeholder:text-gray-600 focus:outline-none focus:border-white transition-colors uppercase tracking-wide text-center sm:text-left"
-             />
-             <button type="submit" className="text-xs font-bold uppercase tracking-[0.2em] py-3 border-b border-white hover:text-gray-300 hover:border-gray-300 transition-colors">
-               Subscribe
-             </button>
-           </form>
-        </div>
-      </section>
     </div>
   );
 }
