@@ -2,7 +2,7 @@
 // Maps admin-entered color name strings to CSS hex values.
 // When a new color is added via admin, add its entry here — no other file needs to change.
 
-const COLOR_MAP: Record<string, string> = {
+export const COLOR_MAP: Record<string, string> = {
   "Black": "#1a1a1a",
   "White": "#f5f5f5",
   "Gray": "#9ca3af",
@@ -16,6 +16,8 @@ const COLOR_MAP: Record<string, string> = {
   "Dusty Pink": "#d4a5a5",
   "Sage": "#b2bfad",
 };
+
+export const COLOR_NAMES = Object.keys(COLOR_MAP);
 
 export function colorToHex(colorName: string): string {
   return COLOR_MAP[colorName] ?? "#d4c4b7"; // fallback: neutral beige

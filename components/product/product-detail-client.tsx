@@ -8,22 +8,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Check, Heart, Share2, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { useProductNav } from "@/features/products/ProductNavProvider";
-import { Product } from "@/lib/types";
-
-// Mock colors for now as DB schema doesn't have colors
-const MOCK_COLORS = [
-    { name: "Black", hex: "#000000" },
-    { name: "Cream", hex: "#f5f5dc" },
-    { name: "Taupe", hex: "#483C32" }
-];
+import { Product, ProductVariant } from "@/lib/types";
+import { colorToHex } from "@/lib/color-map";
 
 interface ProductDetailClientProps {
   product: Product;
   recommendedProducts: Product[];
+  colorVariants: ProductVariant[];
 }
 
-export function ProductDetailClient({ product, recommendedProducts }: ProductDetailClientProps) {
-  const [selectedColor, setSelectedColor] = useState(MOCK_COLORS[0]);
+export function ProductDetailClient({ product, recommendedProducts, colorVariants }: ProductDetailClientProps) {
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { addItem } = useCart();
@@ -67,7 +61,7 @@ export function ProductDetailClient({ product, recommendedProducts }: ProductDet
       name: product.name,
       price: product.price,
       image: product.images && product.images.length > 0 ? product.images[0] : "/placeholder-bag.jpg",
-      color: selectedColor.name,
+      color: product.color,
       slug: product.slug
     });
   };
@@ -157,23 +151,37 @@ export function ProductDetailClient({ product, recommendedProducts }: ProductDet
             <p className="text-xl text-muted-foreground">Rp {product.price.toLocaleString("id-ID")}</p>
           </div>
 
-          {/* Color Selection */}
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest block mb-3">Color: {selectedColor.name}</span>
-            <div className="flex gap-3">
-              {MOCK_COLORS.map((color) => (
-                <button
-                  key={color.name}
-                  onClick={() => setSelectedColor(color)}
-                  className={`h-8 w-8 rounded-full border border-gray-300 flex items-center justify-center transition-all ${selectedColor.name === color.name ? 'ring-2 ring-offset-2 ring-foreground' : 'hover:scale-110'}`}
-                  style={{ backgroundColor: color.hex }}
-                  title={color.name}
-                >
-                   {selectedColor.name === color.name && <Check className={`w-4 h-4 ${color.name === 'Black' || color.name === 'Taupe' ? 'text-white' : 'text-black'}`} />}
-                </button>
-              ))}
+          {/* Color Selection — dynamic variants from DB */}
+          {colorVariants.length > 0 && (
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest block mb-3">
+                Color: {product.color}
+              </span>
+              <div className="flex gap-3">
+                {colorVariants.map((variant) => {
+                  const isActive = variant.slug === product.slug;
+                  const hex = colorToHex(variant.color);
+                  const isDark = hex < "#888888";
+                  return (
+                    <Link
+                      key={variant.id}
+                      href={`/product/${variant.slug}`}
+                      title={variant.color}
+                      aria-label={variant.color}
+                      className={`h-8 w-8 rounded-full border border-gray-300 flex items-center justify-center transition-all shrink-0 ${
+                        isActive ? 'ring-2 ring-offset-2 ring-foreground' : 'hover:scale-110'
+                      }`}
+                      style={{ backgroundColor: hex }}
+                    >
+                      {isActive && (
+                        <Check className={`w-4 h-4 ${isDark ? 'text-white' : 'text-black'}`} />
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Action Buttons */}
           <div className="space-y-3 pt-4">

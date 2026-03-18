@@ -58,6 +58,22 @@ export async function getAllProducts(filter: ProductFilter = {}): Promise<Produc
   return products as Product[];
 }
 
+export async function getVariantsByBaseName(baseName: string): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('Product')
+    .select('*')
+    .eq('baseName', baseName)
+    .eq('is_archived', false)
+    .order('createdAt', { ascending: true });
+
+  if (error) {
+    console.error("Repository Error [getVariantsByBaseName]:", error);
+    return [];
+  }
+
+  return data as Product[];
+}
+
 export async function getRecommendedProducts(excludeSlug: string, limit = 8): Promise<Product[]> {
   const { data: products, error } = await supabase
     .from('Product')

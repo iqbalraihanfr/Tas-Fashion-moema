@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
 import { UploadCloud, XCircle, Info, CheckCircle2, Loader2, Crop } from "lucide-react";
 import { createProduct, updateProduct } from "@/lib/admin-actions";
+import { COLOR_NAMES } from "@/lib/color-map";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -342,7 +343,19 @@ export function ProductForm({ initialData }: ProductFormProps) {
             </div>
             <div className="space-y-2">
                 <Label htmlFor="color" className="text-sm font-medium">Color Variant</Label>
-                <Input id="color" {...register("color")} className="h-10" placeholder="e.g. Gray" />
+                <Input
+                  id="color"
+                  {...register("color")}
+                  list="color-suggestions"
+                  className="h-10"
+                  placeholder="e.g. Gray"
+                  autoComplete="off"
+                />
+                <datalist id="color-suggestions">
+                  {COLOR_NAMES.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
                 {errors.color && <p className="text-red-500 text-xs font-medium">{errors.color.message}</p>}
             </div>
             <div className="space-y-2">
