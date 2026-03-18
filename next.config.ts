@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    // Images served directly from Supabase (already optimized WebP).
+    // Bypasses Next.js image optimizer which blocks NAT64 IPs in dev.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
