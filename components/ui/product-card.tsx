@@ -1,61 +1,79 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { colorToHex } from "@/lib/color-map";
+import { ProductGroup } from "@/lib/types";
 
 interface ProductCardProps {
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    price: number;
-    images: string[];
-  };
+  group: ProductGroup;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
-  const imageUrl = product.images?.[0] || "/placeholder-bag.jpg";
-  
-  // Simulasi image kedua untuk hover effect (di real app ambil dari images[1])
-  const hoverImageUrl = product.images?.[1] || imageUrl; 
+export default function ProductCard({ group }: ProductCardProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeVariant = group.variants[activeIndex];
+
+  const imageUrl = activeVariant.images?.[0] ?? "/placeholder-bag.jpg";
+  const hoverImageUrl = activeVariant.images?.[1] ?? imageUrl;
 
   return (
-    <Link href={`/product/${product.slug}`} className="group block h-full flex flex-col">
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#f5f5f5]">
-        {/* Main Image */}
-        <Image
-          src={imageUrl}
-          alt={product.name}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-          className="object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-0"
-        />
-        {/* Hover Image (Revealed on hover) - For now using same image but maybe zoomed or different if available */}
-        <Image
-          src={hoverImageUrl}
-          alt={`${product.name} - view 2`}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-          className="absolute inset-0 object-cover opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100 scale-105"
-        />
-        
-        {/* Quick Add Badge (Optional C&K style) */}
-        <div className="absolute bottom-0 left-0 w-full translate-y-full bg-white/90 py-2 text-center text-[10px] font-semibold uppercase tracking-widest backdrop-blur transition-transform duration-300 group-hover:translate-y-0">
-          Quick Add
+    <div className="group flex flex-col h-full">
+      <Link href={`/product/${activeVariant.slug}`} className="block">
+        <div className="relative aspect-4/5 w-full overflow-hidden bg-[#f5f5f5]">
+          {/* Main Image */}
+          <Image
+            src={imageUrl}
+            alt={group.baseName}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            className="object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-0"
+          />
+          {/* Hover Image */}
+          <Image
+            src={hoverImageUrl}
+            alt={`${group.baseName} - view 2`}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            className="absolute inset-0 object-cover opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100 scale-105"
+          />
+          {/* Quick Add Badge */}
+          <div className="absolute bottom-0 left-0 w-full translate-y-full bg-white/90 py-2 text-center text-[10px] font-semibold uppercase tracking-widest backdrop-blur transition-transform duration-300 group-hover:translate-y-0">
+            Quick Add
+          </div>
         </div>
-      </div>
-      
+      </Link>
+
       <div className="mt-4 space-y-1 text-center">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground line-clamp-1">
-          {product.name}
-        </h3>
-        <p className="text-xs text-muted-foreground">
-          Rp {product.price.toLocaleString("id-ID")}
-        </p>
-        {/* Color swatches simulation */}
-        <div className="mt-2 flex justify-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-            <span className="h-2 w-2 rounded-full bg-black border border-gray-300"></span>
-            <span className="h-2 w-2 rounded-full bg-[#d4c4b7] border border-gray-300"></span>
-        </div>
+        <Link href={`/product/${activeVariant.slug}`} className="block">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground line-clamp-1">
+            {group.baseName}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Rp {activeVariant.price.toLocaleString("id-ID")}
+          </p>
+        </Link>
+
+        {/* Color swatches — always visible, one per variant */}
+        {group.variants.length > 1 && (
+          <div className="mt-2 flex justify-center gap-1.5">
+            {group.variants.map((variant, i) => (
+              <button
+                key={variant.id}
+                onClick={() => setActiveIndex(i)}
+                title={variant.color}
+                aria-label={variant.color}
+                className={`rounded-full border transition-all duration-200 cursor-pointer ${
+                  i === activeIndex
+                    ? "h-3 w-3 border-foreground ring-2 ring-foreground ring-offset-1"
+                    : "h-2.5 w-2.5 border-gray-300 hover:scale-110"
+                }`}
+                style={{ backgroundColor: colorToHex(variant.color) }}
+              />
+            ))}
+          </div>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }
