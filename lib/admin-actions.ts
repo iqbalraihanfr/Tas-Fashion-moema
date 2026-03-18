@@ -242,6 +242,58 @@ export async function updateOrderStatus(formData: FormData): Promise<void> {
 }
 
 // =============================================
+// COLOR ACTIONS
+// =============================================
+import {
+  createColor as createColorRepo,
+  deleteColor as deleteColorRepo,
+} from "@/services/database/color.repository";
+
+export async function createColorAction(
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
+  const name = (formData.get("name") as string)?.trim();
+  const hex  = (formData.get("hex")  as string)?.trim();
+
+  if (!name || !hex) {
+    return { success: false, error: "Color name and hex value are required." };
+  }
+
+  try {
+    await createColorRepo(name, hex);
+  } catch (e: any) {
+    return { success: false, error: e.message || "Failed to save color." };
+  }
+
+  revalidatePath('/admin/dashboard/colors');
+  revalidatePath('/admin/dashboard/products/new');
+  revalidatePath('/', 'layout');
+  return { success: true };
+}
+
+export async function deleteColorAction(
+  id: string
+): Promise<{ success: boolean; error?: string; usedBy?: string[] }> {
+  try {
+    const result = await deleteColorRepo(id);
+    if (result !== null) {
+      return {
+        success: false,
+        usedBy: result.usedBy,
+        error: `Color is used by ${result.usedBy.length} active product(s).`,
+      };
+    }
+  } catch (e: any) {
+    return { success: false, error: e.message || "Failed to delete color." };
+  }
+
+  revalidatePath('/admin/dashboard/colors');
+  revalidatePath('/admin/dashboard/products/new');
+  revalidatePath('/', 'layout');
+  return { success: true };
+}
+
+// =============================================
 // SHOWCASE ACTIONS
 // =============================================
 import * as showcaseService from "@/services/showcase.service";
