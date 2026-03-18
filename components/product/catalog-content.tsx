@@ -6,23 +6,16 @@ import ProductCard from "@/components/ui/product-card";
 import { CatalogToolbar } from "@/components/product/catalog-toolbar";
 import { CatalogFiltersSidebar } from "@/components/product/catalog-filters";
 import { Button } from "@/components/ui/button";
+import { ProductGroup } from "@/lib/types";
 
 const NAV_ITEMS = ["New Arrivals", "Totes", "Shoulder Bags", "Crossbody", "Mini Bags", "Clutches", "Backpacks", "Sale"];
 
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  images: string[];
-}
-
 interface CatalogContentProps {
-  products: Product[];
+  productGroups: ProductGroup[];
   title: string;
 }
 
-export function CatalogContent({ products, title }: CatalogContentProps) {
+export function CatalogContent({ productGroups, title }: CatalogContentProps) {
   const [columns, setColumns] = useState(4);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -57,7 +50,7 @@ export function CatalogContent({ products, title }: CatalogContentProps) {
 
         {/* Toolbar: Filter toggle, Sort, Count, Column selector */}
         <CatalogToolbar
-          totalProducts={products.length}
+          totalProducts={productGroups.length}
           columns={columns}
           onColumnsChange={setColumns}
           isFilterOpen={isFilterOpen}
@@ -79,7 +72,7 @@ export function CatalogContent({ products, title }: CatalogContentProps) {
 
         {/* Product Grid */}
         <div className="flex-1 p-4 md:p-8">
-          {products.length === 0 ? (
+          {productGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-40 border border-dashed border-muted text-center">
               <p className="text-muted-foreground uppercase tracking-widest text-xs mb-8">
                 No pieces found matching your criteria.
@@ -94,8 +87,8 @@ export function CatalogContent({ products, title }: CatalogContentProps) {
             </div>
           ) : (
             <div className={`grid ${gridClass} gap-x-4 gap-y-10`}>
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {productGroups.map((group) => (
+                <ProductCard key={group.baseName} group={group} />
               ))}
             </div>
           )}
