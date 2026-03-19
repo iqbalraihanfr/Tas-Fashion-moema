@@ -6,22 +6,43 @@ import { auth } from "@/auth";
 import * as productService from "@/services/product.service";
 import * as orderService from "@/services/order.service";
 import { AppError } from "@/lib/errors";
+import { PRODUCT_CATEGORIES } from "@/lib/product-categories";
 
-// Zod schema for product validation
-const productSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, "Product name is required"),
-  baseName: z.string().min(1, "Base name (Model) is required"),
-  sku: z.string().min(1, "SKU/Code is required"),
-  color: z.string().min(1, "Color is required"),
-  dimensions: z.string().min(1, "Dimensions are required"),
-  category: z.string().nullable().default(null),
-  description: z.string().min(1, "Description is required"),
+const productCategorySchema = z.enum(PRODUCT_CATEGORIES);
+const trimmedString = (message: string) =>
+  z.string().trim().min(1, message);
+
+const baseProductSchema = z.object({
+  name: trimmedString("Product name is required"),
+  baseName: trimmedString("Base name (Model) is required"),
+  sku: trimmedString("SKU/Code is required"),
+  color: trimmedString("Color is required"),
+  dimensions: trimmedString("Dimensions are required"),
+  category: z.preprocess((value) => {
+    if (typeof value !== "string") {
+      return null;
+    }
+
+    const normalized = value.trim();
+    return normalized === "" ? null : normalized;
+  }, productCategorySchema.nullable().default(null)),
+  description: trimmedString("Description is required"),
   price: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().positive("Price must be positive")),
   stock: z.preprocess((a) => parseInt(z.string().parse(a), 10), z.number().int().nonnegative("Stock cannot be negative")),
-  newImages: z.array(z.instanceof(File)).optional(),
-  existingImages: z.array(z.string()).optional(),
 });
+
+const createProductSchema = baseProductSchema.extend({
+  newImages: z.array(z.instanceof(File)).min(1, "At least one product image is required"),
+});
+
+const updateProductSchema = baseProductSchema.extend({
+  id: z.string().min(1, "Product ID is missing."),
+  newImages: z.array(z.instanceof(File)).optional(),
+  existingImages: z.array(z.string().trim().min(1)).optional(),
+}).refine(
+  (data) => (data.existingImages?.length ?? 0) + (data.newImages?.length ?? 0) > 0,
+  { message: "At least one product image is required" }
+);
 
 // Zod schema for order status update
 const orderStatusSchema = z.object({
@@ -66,7 +87,7 @@ export async function createProduct(formData: FormData) {
   const stock = formData.get("stock") as string;
   const newImages = formData.getAll("newImages") as File[];
 
-  const parsed = productSchema.safeParse({
+  const parsed = createProductSchema.safeParse({
     name,
     baseName,
     sku,
@@ -95,7 +116,7 @@ export async function createProduct(formData: FormData) {
       description: parsed.data.description,
       price: parsed.data.price,
       stock: parsed.data.stock,
-      images: parsed.data.newImages || [],
+      images: parsed.data.newImages,
     });
   } catch (error: unknown) {
     console.error(error);
@@ -139,7 +160,7 @@ export async function updateProduct(formData: FormData) {
 
   const existingImages: string[] = existingImagesJson ? JSON.parse(existingImagesJson) : [];
 
-  const parsed = productSchema.safeParse({
+  const parsed = updateProductSchema.safeParse({
     id,
     name,
     baseName,

@@ -2,6 +2,7 @@ import * as productRepo from "./database/product.repository";
 import * as storageService from "./storage.service";
 import slugify from "slugify";
 import { AppError } from "@/lib/errors";
+import { PRODUCT_CATEGORIES } from "@/lib/product-categories";
 
 export interface CreateProductInput {
   name: string;           // Full name, e.g., "Joanna Gray"
@@ -21,27 +22,86 @@ export interface UpdateProductInput extends Partial<CreateProductInput> {
   existingImages?: string[];
 }
 
+function normalizeRequiredText(value: string, field: string) {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (!normalized) {
+    throw new AppError(`${field} is required`, 400, "VALIDATION_ERROR");
+  }
+
+  return normalized;
+}
+
+function normalizeOptionalCategory(category: string | null | undefined) {
+  if (!category) {
+    return null;
+  }
+
+  const normalized = category.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  if (!PRODUCT_CATEGORIES.includes(normalized as (typeof PRODUCT_CATEGORIES)[number])) {
+    throw new AppError("Invalid product category", 400, "VALIDATION_ERROR");
+  }
+
+  return normalized;
+}
+
+function ensurePublicProductShape(input: Pick<CreateProductInput, "name" | "baseName" | "sku" | "color" | "dimensions" | "description" | "category">) {
+  const name = normalizeRequiredText(input.name, "Product name");
+  const baseName = normalizeRequiredText(input.baseName, "Base name");
+  const sku = normalizeRequiredText(input.sku, "SKU");
+  const color = normalizeRequiredText(input.color, "Color");
+  const dimensions = normalizeRequiredText(input.dimensions, "Dimensions");
+  const description = normalizeRequiredText(input.description, "Description");
+  const category = normalizeOptionalCategory(input.category);
+  const slug = slugify(name, { lower: true, strict: true });
+
+  if (!slug) {
+    throw new AppError(
+      "Product name must contain letters or numbers so a valid slug can be generated",
+      400,
+      "VALIDATION_ERROR"
+    );
+  }
+
+  return {
+    name,
+    baseName,
+    sku,
+    color,
+    dimensions,
+    description,
+    category,
+    slug,
+  };
+}
+
 export async function createProduct(input: CreateProductInput) {
-  const slug = slugify(input.name, { lower: true, strict: true });
+  const normalized = ensurePublicProductShape(input);
+  if (input.images.length === 0) {
+    throw new AppError("At least one product image is required", 400, "VALIDATION_ERROR");
+  }
   
   // 1. Upload Images with organized folder structure
   // Structure: products/{baseName}/{baseName}-{color}-{number}.webp
   const imageUrls = await storageService.uploadProductImages(
     input.images,
-    input.baseName,
-    input.color
+    normalized.baseName,
+    normalized.color
   );
   
   // 2. Create in DB
   return await productRepo.createProduct({
-    name: input.name,
-    baseName: input.baseName,
-    slug,
-    sku: input.sku,
-    color: input.color,
-    dimensions: input.dimensions,
-    description: input.description,
-    category: input.category,
+    name: normalized.name,
+    baseName: normalized.baseName,
+    slug: normalized.slug,
+    sku: normalized.sku,
+    color: normalized.color,
+    dimensions: normalized.dimensions,
+    description: normalized.description,
+    category: normalized.category,
     price: input.price,
     stock: input.stock,
     images: imageUrls,
@@ -55,6 +115,16 @@ export async function updateProduct(input: UpdateProductInput) {
     throw new AppError("Product not found", 404, "NOT_FOUND");
   }
 
+  const normalized = ensurePublicProductShape({
+    name: input.name ?? currentProduct.name,
+    baseName: input.baseName ?? currentProduct.baseName,
+    sku: input.sku ?? currentProduct.sku,
+    color: input.color ?? currentProduct.color,
+    dimensions: input.dimensions ?? currentProduct.dimensions,
+    description: input.description ?? currentProduct.description,
+    category: input.category ?? currentProduct.category,
+  });
+
   let finalImages = input.existingImages || currentProduct.images;
   
   // 1. Handle image deletions (if any images were removed)
@@ -66,8 +136,8 @@ export async function updateProduct(input: UpdateProductInput) {
   // 2. Upload new images (if any)
   if (input.images && input.images.length > 0) {
     // Calculate start index based on existing images count
-    const baseName = input.baseName || currentProduct.baseName;
-    const color = input.color || currentProduct.color;
+    const baseName = normalized.baseName;
+    const color = normalized.color;
     const startIndex = finalImages.length;
     
     const newImageUrls = await storageService.uploadProductImages(
@@ -79,18 +149,20 @@ export async function updateProduct(input: UpdateProductInput) {
     finalImages = [...finalImages, ...newImageUrls];
   }
 
-  const slug = input.name ? slugify(input.name, { lower: true, strict: true }) : currentProduct.slug;
+  if (finalImages.length === 0) {
+    throw new AppError("At least one product image is required", 400, "VALIDATION_ERROR");
+  }
 
   // 3. Update in DB
   return await productRepo.updateProduct(input.id, {
-    name: input.name,
-    baseName: input.baseName,
-    slug,
-    sku: input.sku,
-    color: input.color,
-    dimensions: input.dimensions,
-    description: input.description,
-    category: input.category,
+    name: normalized.name,
+    baseName: normalized.baseName,
+    slug: normalized.slug,
+    sku: normalized.sku,
+    color: normalized.color,
+    dimensions: normalized.dimensions,
+    description: normalized.description,
+    category: normalized.category,
     price: input.price,
     stock: input.stock,
     images: finalImages,

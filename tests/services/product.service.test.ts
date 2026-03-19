@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as productService from '@/services/product.service';
 import * as productRepo from '@/services/database/product.repository';
 import * as storageService from '@/services/storage.service';
-import { AppError } from '@/lib/errors';
 
 // Mock dependencies
 vi.mock('@/services/database/product.repository');
@@ -79,6 +78,30 @@ describe('Product Service Integration Tests', () => {
           slug: 'joanna-gray-tote' // slugified from name
         }));
       });
+
+    it('should reject product creation without images', async () => {
+      await expect(
+        productService.createProduct({
+          ...mockInput,
+          images: [],
+        })
+      ).rejects.toThrow('At least one product image is required');
+
+      expect(storageService.uploadProductImages).not.toHaveBeenCalled();
+      expect(productRepo.createProduct).not.toHaveBeenCalled();
+    });
+
+    it('should reject product creation when slug cannot be generated', async () => {
+      await expect(
+        productService.createProduct({
+          ...mockInput,
+          name: '!!!',
+        })
+      ).rejects.toThrow('valid slug');
+
+      expect(storageService.uploadProductImages).not.toHaveBeenCalled();
+      expect(productRepo.createProduct).not.toHaveBeenCalled();
+    });
   });
 
   describe('updateProduct', () => {
@@ -135,6 +158,19 @@ describe('Product Service Integration Tests', () => {
             name: 'New Name',
             images: ['old-img-1.jpg', 'new-img.jpg']
         }));
+    });
+
+    it('should reject updates that remove all images', async () => {
+        vi.mocked(productRepo.getProductById).mockResolvedValue(existingProduct);
+
+        await expect(
+          productService.updateProduct({
+            id: 'prod-1',
+            existingImages: [],
+          })
+        ).rejects.toThrow('At least one product image is required');
+
+        expect(productRepo.updateProduct).not.toHaveBeenCalled();
     });
   });
 });

@@ -68,6 +68,32 @@ describe("admin actions", () => {
     expect(orderService.updateOrderStatus).not.toHaveBeenCalled();
   });
 
+  it("returns validation error for product creation without images", async () => {
+    vi.mocked(auth).mockResolvedValue({
+      user: { id: "admin-1" },
+      expires: "2099-01-01T00:00:00.000Z",
+    });
+
+    const formData = new FormData();
+    formData.append("name", "Joanna Gray");
+    formData.append("baseName", "Joanna");
+    formData.append("sku", "Y1886");
+    formData.append("color", "Gray");
+    formData.append("dimensions", "45x45cm");
+    formData.append("category", "Totes");
+    formData.append("description", "Luxury tote");
+    formData.append("price", "1500000");
+    formData.append("stock", "10");
+
+    const result = await createProduct(formData);
+
+    expect(result).toEqual({
+      success: false,
+      error: "At least one product image is required",
+    });
+    expect(productService.createProduct).not.toHaveBeenCalled();
+  });
+
   it("updates order status and revalidates affected routes", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "admin-1" },

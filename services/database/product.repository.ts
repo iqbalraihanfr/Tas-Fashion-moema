@@ -10,6 +10,10 @@ export interface ProductFilter {
   sort?: 'price_asc' | 'price_desc' | 'newest';
 }
 
+function filterPublicProducts(products: Product[] | null): Product[] {
+  return (products ?? []).filter((product) => product.slug?.trim() && product.baseName?.trim());
+}
+
 export async function getAllProducts(filter: ProductFilter = {}): Promise<Product[]> {
   let query = supabase.from('Product').select('*').eq('is_archived', false);
 
@@ -55,7 +59,7 @@ export async function getAllProducts(filter: ProductFilter = {}): Promise<Produc
     throw new AppError("Failed to fetch products", 500, "DATABASE_ERROR");
   }
 
-  return products as Product[];
+  return filterPublicProducts(products as Product[]);
 }
 
 export async function getUniqueBaseNames(): Promise<string[]> {
@@ -89,7 +93,7 @@ export async function getVariantsByBaseName(baseName: string): Promise<Product[]
     return [];
   }
 
-  return data as Product[];
+  return filterPublicProducts(data as Product[]);
 }
 
 export async function getRecommendedProducts(excludeSlug: string, limit = 8): Promise<Product[]> {
@@ -106,7 +110,7 @@ export async function getRecommendedProducts(excludeSlug: string, limit = 8): Pr
     return []; // Graceful fallback — recommendations are non-critical
   }
 
-  return products as Product[];
+  return filterPublicProducts(products as Product[]);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {

@@ -21,16 +21,7 @@ import {
   type CompressedImageResult,
 } from "@/lib/image-utils";
 import ImageCropper from "@/components/admin/image-cropper";
-
-const PRODUCT_CATEGORIES = [
-  "Totes",
-  "Shoulder Bags",
-  "Crossbody",
-  "Mini Bags",
-  "Clutches",
-  "Backpacks",
-  "Sale",
-] as const;
+import { PRODUCT_CATEGORIES } from "@/lib/product-categories";
 
 const productSchema = z.object({
   name: z.string().min(1, "Full product name is required"),
