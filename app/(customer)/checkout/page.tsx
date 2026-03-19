@@ -41,6 +41,41 @@ export default function CheckoutPage() {
     );
   }
 
+  // Reusable order summary items
+  const OrderSummaryItems = () => (
+    <>
+      <div className="space-y-6 mb-8">
+        {cartItems.map((item) => (
+          <div key={item.id + item.color} className="flex gap-4">
+            <div className="relative w-16 h-16 bg-white border border-border shrink-0">
+              <Image src={item.image} alt={item.name} fill className="object-cover" />
+              <span className="absolute -top-2 -right-2 bg-gray-800 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">{item.quantity}</span>
+            </div>
+            <div className="flex-1 text-sm min-w-0">
+              <p className="font-medium truncate">{item.name}</p>
+              <p className="text-muted-foreground text-xs mt-1">{item.color}</p>
+            </div>
+            <p className="text-sm font-medium shrink-0">Rp {(item.price * item.quantity).toLocaleString("id-ID")}</p>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-border pt-6 space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Subtotal</span>
+          <span>Rp {subtotal.toLocaleString("id-ID")}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Shipping</span>
+          <span>Free</span>
+        </div>
+      </div>
+      <div className="border-t border-border mt-6 pt-6 flex justify-between items-center">
+        <span className="font-medium uppercase tracking-wide">Total</span>
+        <span className="text-xl font-medium">Rp {subtotal.toLocaleString("id-ID")}</span>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-white">
         {/* Minimal Header for Checkout */}
@@ -60,19 +95,28 @@ export default function CheckoutPage() {
         <div className="container max-w-6xl grid lg:grid-cols-2 gap-0 lg:min-h-[calc(100vh-60px)]">
             {/* LEFT: Form Section */}
             <div className="py-10 lg:pr-16 lg:border-r border-border">
+                {/* Mobile Order Summary — collapsible, semantic HTML */}
+                <details className="lg:hidden mb-10 border border-border" id="mobile-order-summary">
+                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer select-none bg-muted/20">
+                    <span className="text-sm font-medium uppercase tracking-widest">Order Summary ({cartItems.length})</span>
+                    <span className="text-sm font-medium">Rp {subtotal.toLocaleString("id-ID")}</span>
+                  </summary>
+                  <div className="px-5 py-6">
+                    <OrderSummaryItems />
+                  </div>
+                </details>
+
                 <form className="max-w-lg mx-auto lg:mx-0 space-y-10" onSubmit={handleSubmit}>
                     
                     {/* Contact */}
                     <section>
-                        <h2 className="text-sm font-medium uppercase tracking-widest mb-6 flex items-center justify-between">
+                        <h2 className="text-sm font-medium uppercase tracking-widest mb-6">
                             Contact Information
-                            {/* Login link for future, currently Guest Checkout */}
-                            <Link href="/login" className="text-[10px] underline normal-case text-muted-foreground">Already have an account?</Link>
                         </h2>
                         <div className="space-y-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email Address</Label>
-                                <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+                                <Input id="email" name="email" type="email" placeholder="you@example.com" required autoComplete="email" />
                             </div>
                         </div>
                     </section>
@@ -84,29 +128,29 @@ export default function CheckoutPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="firstName">First Name</Label>
-                                    <Input id="firstName" name="firstName" required />
+                                    <Input id="firstName" name="firstName" required autoComplete="given-name" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="lastName">Last Name</Label>
-                                    <Input id="lastName" name="lastName" required />
+                                    <Input id="lastName" name="lastName" required autoComplete="family-name" />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="address">Address</Label>
-                                <Input id="address" name="address" placeholder="Street, House No." required />
+                                <Input id="address" name="address" placeholder="Street, House No." required autoComplete="street-address" />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="city">City</Label>
-                                <Input id="city" name="city" required />
+                                <Input id="city" name="city" required autoComplete="address-level2" />
                             </div>
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="postalCode">Postal Code</Label>
-                                    <Input id="postalCode" name="postalCode" required />
+                                    <Input id="postalCode" name="postalCode" required autoComplete="postal-code" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone</Label>
-                                    <Input id="phone" name="phone" type="tel" placeholder="+628123..." required />
+                                    <Input id="phone" name="phone" type="tel" placeholder="+628123..." required autoComplete="tel" />
                                 </div>
                             </div>
                          </div>
@@ -132,44 +176,11 @@ export default function CheckoutPage() {
                 </form>
             </div>
 
-            {/* RIGHT: Order Summary */}
+            {/* RIGHT: Desktop Order Summary */}
             <div className="hidden lg:block bg-muted/20 py-10 pl-16">
                  <div className="max-w-md">
                     <h2 className="text-sm font-medium uppercase tracking-widest mb-8">Order Summary</h2>
-                    
-                    {/* Items */}
-                    <div className="space-y-6 mb-8">
-                        {cartItems.map((item) => (
-                           <div key={item.id + item.color} className="flex gap-4">
-                                <div className="relative w-16 h-16 bg-white border border-border">
-                                    <Image src={item.image} alt={item.name} fill className="object-cover" />
-                                    <span className="absolute -top-2 -right-2 bg-gray-800 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">{item.quantity}</span>
-                                </div>
-                                <div className="flex-1 text-sm">
-                                    <p className="font-medium">{item.name}</p>
-                                    <p className="text-muted-foreground text-xs mt-1">{item.color}</p>
-                                </div>
-                                <p className="text-sm font-medium">Rp {(item.price * item.quantity).toLocaleString("id-ID")}</p>
-                           </div>
-                        ))}
-                    </div>
-
-                    {/* Totals */}
-                    <div className="border-t border-border pt-6 space-y-2 text-sm">
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Subtotal</span>
-                            <span>Rp {subtotal.toLocaleString("id-ID")}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Shipping</span>
-                            <span>Free</span>
-                        </div>
-                    </div>
-                    
-                    <div className="border-t border-border mt-6 pt-6 flex justify-between items-center">
-                        <span className="font-medium uppercase tracking-wide">Total</span>
-                        <span className="text-xl font-medium">Rp {subtotal.toLocaleString("id-ID")}</span>
-                    </div>
+                    <OrderSummaryItems />
                  </div>
             </div>
         </div>

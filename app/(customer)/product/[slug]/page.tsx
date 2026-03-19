@@ -5,6 +5,7 @@ import { getProductBySlug, getRecommendedProducts, getVariantsByBaseName } from 
 import { getAllColors, colorsToMap } from "@/services/database/color.repository";
 import { groupProductsByBaseName } from "@/lib/product-utils";
 import { Metadata } from "next";
+import { siteConfig } from "@/lib/site-config";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -13,7 +14,6 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  const baseUrl = "https://www.moemacollection.com";
 
   if (!product) return {};
 
@@ -24,12 +24,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${product.name} | MOEMA`,
     description,
     alternates: {
-      canonical: `${baseUrl}/product/${product.slug}`,
+      canonical: `/product/${product.slug}`,
     },
     openGraph: {
       title: product.name,
       description,
-      url: `${baseUrl}/product/${product.slug}`,
+      url: `/product/${product.slug}`,
       images: [
         {
           url: ogImage,
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           alt: product.name,
         },
       ],
-      type: "article",
+      type: "website",
     },
     twitter: {
       card: "summary_large_image",
@@ -84,7 +84,7 @@ export default async function ProductDetailPage({ params }: Props) {
       "priceCurrency": "IDR",
       "price": product.price,
       "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "url": `${process.env.NEXT_PUBLIC_APP_URL}/product/${product.slug}`
+      "url": `${siteConfig.url}/product/${product.slug}`
     }
   };
 

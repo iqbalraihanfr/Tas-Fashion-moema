@@ -1,45 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, ArrowRight } from "lucide-react";
+import { Minus, Plus, ArrowRight, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useCart } from "@/context/cart-context";
 
 export default function CartPage() {
-  // Mock Cart Data
-  const [cartItems, setCartItems] = useState([
-    {
-      id: "1",
-      name: "Gabine Saddle Bag",
-      color: "Black",
-      price: 1299000,
-      quantity: 1,
-      image: "/bag-1.jpg"
-    },
-    {
-      id: "2",
-      name: "Perline Beaded Handle",
-      color: "Cream",
-      price: 999000,
-      quantity: 1,
-      image: "/bag-4.jpg"
-    }
-  ]);
-
-  const updateQuantity = (id: string, change: number) => {
-    setCartItems(items => 
-      items.map(item => 
-        item.id === id ? { ...item, quantity: Math.max(1, item.quantity + change) } : item
-      )
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-  };
-
-  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const { items: cartItems, subtotal, updateQuantity, removeItem } = useCart();
 
   if (cartItems.length === 0) {
     return (
@@ -61,46 +29,50 @@ export default function CartPage() {
         {/* Cart Items List */}
         <div className="flex-1 space-y-8">
           {cartItems.map((item) => (
-            <div key={item.id} className="flex gap-6 py-6 border-b border-border last:border-0">
+            <div key={`${item.id}-${item.color}`} className="flex gap-4 sm:gap-6 py-6 border-b border-border last:border-0">
               {/* Image */}
               <div className="relative w-24 h-24 sm:w-32 sm:h-32 bg-muted shrink-0">
                 <Image src={item.image} alt={item.name} fill className="object-cover" />
               </div>
 
               {/* Details */}
-              <div className="flex-1 flex flex-col justify-between">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium uppercase tracking-wide text-sm sm:text-base">{item.name}</h3>
+              <div className="flex-1 flex flex-col justify-between min-w-0">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-medium uppercase tracking-wide text-sm sm:text-base truncate">{item.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1">Color: {item.color}</p>
                   </div>
-                  <p className="font-medium text-sm sm:text-base">Rp {item.price.toLocaleString("id-ID")}</p>
+                  <p className="font-medium text-sm sm:text-base shrink-0">Rp {item.price.toLocaleString("id-ID")}</p>
                 </div>
 
                 <div className="flex justify-between items-end mt-4">
-                  {/* Quantity Control */}
+                  {/* Quantity Control — enlarged touch targets for mobile */}
                   <div className="flex items-center border border-border">
-                    <button 
-                      onClick={() => updateQuantity(item.id, -1)}
-                      className="p-2 hover:bg-muted transition-colors"
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      className="min-w-10 h-10 hover:bg-muted transition-colors flex items-center justify-center"
+                      aria-label="Decrease quantity"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
                     <span className="w-8 text-center text-xs font-medium">{item.quantity}</span>
-                    <button 
-                      onClick={() => updateQuantity(item.id, 1)}
-                      className="p-2 hover:bg-muted transition-colors"
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="min-w-10 h-10 hover:bg-muted transition-colors flex items-center justify-center"
+                      aria-label="Increase quantity"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
                   </div>
 
                   {/* Remove */}
-                  <button 
+                  <button
                     onClick={() => removeItem(item.id)}
-                    className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-2"
+                    aria-label={`Remove ${item.name}`}
                   >
-                    Remove
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Remove</span>
                   </button>
                 </div>
               </div>

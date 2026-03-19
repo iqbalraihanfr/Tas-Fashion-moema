@@ -57,12 +57,17 @@ export default async function Home() {
 
       {hero && (
         <section
-          className="relative w-full bg-cover bg-center bg-no-repeat overflow-hidden"
-          style={{
-            backgroundImage: `url('${hero.image_url}')`,
-            height: "calc(100dvh - 80px)",
-          }}
+          className="relative w-full overflow-hidden"
+          style={{ height: "calc(100dvh - 80px)" }}
         >
+          <Image
+            src={hero.image_url}
+            alt={hero.title}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
           <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
           <div className="relative h-full flex items-end">
             <div className="px-8 md:px-16 pb-16 md:pb-20">
@@ -85,12 +90,17 @@ export default async function Home() {
       {/* Fallback hero if no showcase hero is set */}
       {!hero && (
         <section
-          className="relative w-full bg-cover bg-center bg-no-repeat overflow-hidden"
-          style={{
-            backgroundImage: "url('/hero-banner.jpg')",
-            height: "calc(100dvh - 80px)",
-          }}
+          className="relative w-full overflow-hidden"
+          style={{ height: "calc(100dvh - 80px)" }}
         >
+          <Image
+            src="/hero-banner.jpg"
+            alt="MOEMA Modern Sculpture Collection"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
           <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
           <div className="relative h-full flex items-end">
             <div className="px-8 md:px-16 pb-16 md:pb-20">
@@ -160,7 +170,7 @@ export default async function Home() {
           ))}
         </div>
         
-        <div className="mt-10 text-center md:hidden">
+        <div className="mt-10 mb-10 text-center md:hidden">
            <Button variant="outline" className="uppercase tracking-widest text-xs rounded-none border-foreground text-foreground w-full" asChild>
               <Link href="/catalog">View All</Link>
            </Button>

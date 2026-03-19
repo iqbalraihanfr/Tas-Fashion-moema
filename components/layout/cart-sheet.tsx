@@ -55,33 +55,44 @@ export default function CartSheet() {
                     className="object-cover"
                   />
                 </div>
-                <div className="flex-1 flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-sm font-medium uppercase tracking-wide line-clamp-1">
-                      {item.name}
-                    </h4>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {item.color}
-                    </p>
+                <div className="flex-1 flex flex-col justify-between min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-medium uppercase tracking-wide line-clamp-1">
+                        {item.name}
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {item.color}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="shrink-0 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={`Remove ${item.name}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center border border-border h-7">
+                    <div className="flex items-center border border-border">
                       <button
                         onClick={() =>
                           updateQuantity(item.id, item.quantity - 1)
                         }
-                        className="px-2 h-full hover:bg-muted transition-colors flex items-center justify-center"
+                        className="min-w-10 h-10 hover:bg-muted transition-colors flex items-center justify-center"
+                        aria-label="Decrease quantity"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="w-6 text-center text-xs font-medium">
+                      <span className="w-8 text-center text-xs font-medium">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() =>
                           updateQuantity(item.id, item.quantity + 1)
                         }
-                        className="px-2 h-full hover:bg-muted transition-colors flex items-center justify-center"
+                        className="min-w-10 h-10 hover:bg-muted transition-colors flex items-center justify-center"
+                        aria-label="Increase quantity"
                       >
                         <Plus className="w-3 h-3" />
                       </button>

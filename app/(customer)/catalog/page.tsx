@@ -1,8 +1,24 @@
+import type { Metadata } from "next";
 import { getAllProducts } from "@/services/database/product.repository";
 import { getAllColors, colorsToMap } from "@/services/database/color.repository";
 import { groupProductsByBaseName } from "@/lib/product-utils";
 import { loadSearchParams } from "./search-params";
 import { CatalogContent } from "@/components/product/catalog-content";
+
+export const metadata: Metadata = {
+  title: "Collection",
+  description:
+    "Explore the MOEMA collection of premium fashion bags, refined silhouettes, and signature color variations.",
+  alternates: {
+    canonical: "/catalog",
+  },
+  openGraph: {
+    title: "MOEMA Collection",
+    description:
+      "Explore the MOEMA collection of premium fashion bags, refined silhouettes, and signature color variations.",
+    url: "/catalog",
+  },
+};
 
 export default async function CatalogPage({
   searchParams,

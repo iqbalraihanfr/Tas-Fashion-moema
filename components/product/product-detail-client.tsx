@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,11 @@ export function ProductDetailClient({ product, recommendedProducts, colorVariant
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { addItem } = useCart();
-  const { setProductInfo, setIsInRecommendationSection } = useProductNav();
+  const { setProductInfo, setIsInRecommendationSection, isInRecommendationSection } = useProductNav();
   const recommendationRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const mainCtaRef = useRef<HTMLButtonElement>(null);
+  const [isMainCtaHidden, setIsMainCtaHidden] = useState(false);
 
   // Register product info in nav context
   useEffect(() => {
@@ -55,6 +57,22 @@ export function ProductDetailClient({ product, recommendedProducts, colorVariant
       setIsInRecommendationSection(false);
     };
   }, [setIsInRecommendationSection]);
+
+  // Track if main CTA is out of view for sticky mobile bar
+  useEffect(() => {
+    const el = mainCtaRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsMainCtaHidden(!entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleAddToBag = () => {
     addItem({
@@ -186,7 +204,7 @@ export function ProductDetailClient({ product, recommendedProducts, colorVariant
 
           {/* Action Buttons */}
           <div className="space-y-3 pt-4">
-            <Button size="lg" className="w-full h-12 uppercase tracking-widest text-xs rounded-none" onClick={handleAddToBag}>
+            <Button size="lg" className="w-full h-12 uppercase tracking-widest text-xs rounded-none" onClick={handleAddToBag} ref={mainCtaRef}>
                 Add to Bag
             </Button>
             <div className="grid grid-cols-2 gap-3">
@@ -283,6 +301,28 @@ export function ProductDetailClient({ product, recommendedProducts, colorVariant
           </div>
         </div>
       )}
+
+      {/* Mobile Sticky "Add to Bag" Bottom Bar */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-40 bg-background/98 backdrop-blur border-t border-border lg:hidden transition-transform duration-300 ${
+          isMainCtaHidden && !isInRecommendationSection ? "translate-y-0" : "translate-y-full"
+        }`}
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <div className="container flex items-center justify-between py-3 gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-widest truncate">{product.name}</p>
+            <p className="text-xs text-muted-foreground">Rp {product.price.toLocaleString("id-ID")}</p>
+          </div>
+          <Button
+            size="sm"
+            className="h-10 px-6 uppercase tracking-widest text-[10px] rounded-none shrink-0"
+            onClick={handleAddToBag}
+          >
+            Add to Bag
+          </Button>
+        </div>
+      </div>
     </>
   );
 }

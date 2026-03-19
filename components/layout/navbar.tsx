@@ -189,17 +189,44 @@ export default function Navbar() {
                     <SheetHeader className="p-6 border-b border-border text-left">
                       <SheetTitle className="text-xl font-bold tracking-[0.15em] uppercase text-[#111111]">MOEMA</SheetTitle>
                     </SheetHeader>
-                    <div className="flex flex-col py-4">
-                      {navItems.map((item) => (
-                        <Link
-                          key={item}
-                          href={`/catalog?category=${item.toLowerCase().replace(" ", "-")}`}
-                          className="px-6 py-4 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/50 last:border-0"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {item}
-                        </Link>
-                      ))}
+                    <div className="flex flex-col">
+                      {/* Home link */}
+                      <Link
+                        href="/"
+                        className="px-6 py-4 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/50"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Beranda
+                      </Link>
+
+                      {/* Collapsible Categories */}
+                      <details className="group" open>
+                        <summary className="px-6 py-4 text-sm font-medium uppercase tracking-wide cursor-pointer select-none hover:bg-muted transition-colors border-b border-border/50 flex items-center justify-between list-none [&::-webkit-details-marker]:hidden">
+                          Kategori
+                          <ChevronUp className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
+                        </summary>
+                        <div className="flex flex-col bg-muted/20">
+                          {navItems.map((item) => (
+                            <Link
+                              key={item}
+                              href={`/catalog?category=${item.toLowerCase().replace(" ", "-")}`}
+                              className="px-8 py-3.5 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/30 last:border-0"
+                              onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                              {item}
+                            </Link>
+                          ))}
+                        </div>
+                      </details>
+
+                      {/* All Products */}
+                      <Link
+                        href="/catalog"
+                        className="px-6 py-4 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/50"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Semua Produk
+                      </Link>
                     </div>
                   </SheetContent>
                 </Sheet>
@@ -241,7 +268,7 @@ export default function Navbar() {
 
             {/* Logo (Center) */}
             <Link href="/" className="flex justify-center">
-              <Image src="/MOEMA-Logo.png" alt="MOEMA" width={140} height={40} className="h-10 w-auto object-contain" priority />
+              <Image src="/MOEMA-Logo.png" alt="MOEMA" width={140} height={40} className="h-11 w-auto object-contain" priority />
             </Link>
 
             {/* User Actions (Right) */}

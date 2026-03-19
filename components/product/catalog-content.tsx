@@ -6,6 +6,7 @@ import ProductCard from "@/components/ui/product-card";
 import { CatalogToolbar } from "@/components/product/catalog-toolbar";
 import { CatalogFiltersSidebar } from "@/components/product/catalog-filters";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ProductGroup } from "@/lib/types";
 
 const NAV_ITEMS = ["New Arrivals", "Totes", "Shoulder Bags", "Crossbody", "Mini Bags", "Clutches", "Backpacks", "Sale"];
@@ -60,13 +61,23 @@ export function CatalogContent({ productGroups, title, colorMap }: CatalogConten
       </div>
 
       <div className="flex">
-        {/* Filter Sidebar */}
+        {/* Mobile: Filter Sheet (bottom slide-up) */}
+        <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+          <SheetContent side="bottom" className="md:hidden max-h-[85vh] overflow-y-auto">
+            <SheetHeader className="pb-4 border-b border-border mb-4">
+              <SheetTitle className="text-[11px] uppercase tracking-[0.2em] font-bold">Filter</SheetTitle>
+            </SheetHeader>
+            <CatalogFiltersSidebar onClose={() => setIsFilterOpen(false)} />
+          </SheetContent>
+        </Sheet>
+
+        {/* Desktop: Inline Filter Sidebar */}
         <aside
-          className={`shrink-0 overflow-y-auto overflow-x-hidden border-r border-border bg-background transition-all duration-300 ease-in-out sticky top-[calc(var(--nav-offset,0px)+120px)] h-[calc(100vh-var(--nav-offset,0px)-120px)] ${
-            isFilterOpen ? "w-64 md:w-72 opacity-100" : "w-0 opacity-0"
+          className={`hidden md:block shrink-0 overflow-y-auto overflow-x-hidden border-r border-border bg-background transition-all duration-300 ease-in-out sticky top-[calc(var(--nav-offset,0px)+120px)] h-[calc(100vh-var(--nav-offset,0px)-120px)] ${
+            isFilterOpen ? "w-72 opacity-100" : "w-0 opacity-0"
           }`}
         >
-          <div className="w-64 md:w-72 p-6">
+          <div className="w-72 p-6">
             <CatalogFiltersSidebar onClose={() => setIsFilterOpen(false)} />
           </div>
         </aside>

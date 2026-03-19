@@ -38,14 +38,14 @@ export default function ProductCard({ group, colorMap }: ProductCardProps) {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             className="absolute inset-0 object-cover opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100 scale-105"
           />
-          {/* Quick Add Badge */}
-          <div className="absolute bottom-0 left-0 w-full translate-y-full bg-white/90 py-2 text-center text-[10px] font-semibold uppercase tracking-widest backdrop-blur transition-transform duration-300 group-hover:translate-y-0">
+          {/* Quick Add Badge — visible on mobile, hover-reveal on desktop */}
+          <div className="absolute bottom-0 left-0 w-full translate-y-0 md:translate-y-full bg-white/90 py-2 text-center text-[9px] font-bold uppercase tracking-[0.2em] backdrop-blur transition-transform duration-300 md:group-hover:translate-y-0">
             Quick Add
           </div>
         </div>
       </Link>
 
-      <div className="mt-4 space-y-1 text-center">
+      <div className="mt-3 space-y-0.5 text-center">
         <Link href={`/product/${activeVariant.slug}`} className="block">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground line-clamp-1">
             {group.baseName}
@@ -55,22 +55,26 @@ export default function ProductCard({ group, colorMap }: ProductCardProps) {
           </p>
         </Link>
 
-        {/* Color swatches — always visible, one per variant */}
+        {/* Color swatches — always visible, one per variant, WCAG touch targets */}
         {group.variants.length > 1 && (
-          <div className="mt-2 flex justify-center gap-1.5">
+          <div className="mt-2 flex justify-center gap-0.5">
             {group.variants.map((variant, i) => (
               <button
                 key={variant.id}
                 onClick={() => setActiveIndex(i)}
                 title={variant.color}
-                aria-label={variant.color}
-                className={`rounded-full border transition-all duration-200 cursor-pointer ${
-                  i === activeIndex
-                    ? "h-3 w-3 border-foreground ring-2 ring-foreground ring-offset-1"
-                    : "h-2.5 w-2.5 border-gray-300 hover:scale-110"
-                }`}
-                style={{ backgroundColor: colorMap ? (colorMap[variant.color] ?? '#d4c4b7') : colorToHex(variant.color) }}
-              />
+                aria-label={`Select color: ${variant.color}`}
+                className="p-1.5 flex items-center justify-center cursor-pointer"
+              >
+                <span
+                  className={`block rounded-full border transition-all duration-200 ${
+                    i === activeIndex
+                      ? "h-4.5 w-4.5 border-foreground ring-1 ring-foreground ring-offset-1"
+                      : "h-3.5 w-3.5 border-gray-300 hover:scale-110"
+                  }`}
+                  style={{ backgroundColor: colorMap ? (colorMap[variant.color] ?? '#d4c4b7') : colorToHex(variant.color) }}
+                />
+              </button>
             ))}
           </div>
         )}
