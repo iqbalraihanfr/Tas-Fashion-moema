@@ -17,8 +17,8 @@ interface CatalogContentProps {
 }
 
 export function CatalogContent({ productGroups, colorMap }: CatalogContentProps) {
-  const [mobileColumns, setMobileColumns] = useState(2);
-  const [desktopColumns, setDesktopColumns] = useState(4);
+  const [mobileColumns, setMobileColumns] = useState<2 | 3>(2);
+  const [desktopColumns, setDesktopColumns] = useState<3 | 4 | 6>(4);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const gridClass =
