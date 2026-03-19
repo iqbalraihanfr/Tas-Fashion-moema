@@ -1,33 +1,29 @@
 import { test, expect } from '@playwright/test';
+import { gotoCatalog, openCatalogFilter, visibleButtonByText } from './helpers/storefront';
 
 test.describe('Catalog Filters & Sorting (nuqs State)', () => {
-  test.use({ viewport: { width: 1440, height: 900 } });
-
   test.beforeEach(async ({ page }) => {
-    await page.goto('/catalog');
+    await gotoCatalog(page);
   });
 
-  test('should update URL when category is selected', async ({ page }) => {
-    // 1. Wait for the real title to appear (ending the skeleton state)
-    await expect(page.getByText('The Collection')).toBeVisible({ timeout: 20000 });
+  test('should update URL when category is selected', async ({ page, isMobile }) => {
+    if (isMobile) {
+      await openCatalogFilter(page);
+      await visibleButtonByText(page, 'Totes').click();
+    } else {
+      await page.getByRole('link', { name: /^totes$/i }).first().click();
+    }
 
-    // 2. Click on "Totes" category in the sidebar
-    // We use getByText to be agnostic of button vs link during hydration
-    const totesFilter = page.locator('aside').getByText('Totes', { exact: true });
-    await totesFilter.click();
-
-    // 3. Verify URL contains category=totes
     await expect(page).toHaveURL(/category=totes/, { timeout: 10000 });
   });
 
-  test('should update URL when sort option is changed', async ({ page }) => {
-    await expect(page.getByText('The Collection')).toBeVisible({ timeout: 20000 });
+  test('should update URL when sort option is changed', async ({ page, isMobile }) => {
+    const sortTrigger = isMobile
+      ? page.getByRole('button', { name: /^fitur$/i })
+      : page.getByRole('button', { name: /urutkan berdasarkan/i });
 
-    // 1. Click "Price Low" sort
-    const priceLowSort = page.getByText('Price Low', { exact: true });
-    await priceLowSort.click();
-
-    // 2. Verify URL
+    await sortTrigger.click();
+    await page.getByRole('button', { name: /harga terendah/i }).click();
     await expect(page).toHaveURL(/sort=price_asc/, { timeout: 10000 });
   });
 });
