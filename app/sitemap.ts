@@ -1,10 +1,10 @@
 import { MetadataRoute } from 'next'
 import { supabase } from '@/lib/supabase'
+import { siteConfig } from '@/lib/site-config'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://www.moemacollection.com'
+  const baseUrl = siteConfig.url
 
-  // Fetch all product slugs
   const { data: products } = await supabase
     .from('Product')
     .select('slug, updatedAt')
@@ -29,6 +29,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/cookie-policy`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.3,
     },
     ...productUrls,
   ]

@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { siteConfig } from '@/lib/site-config'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,11 +9,13 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: [
           '/api/',
+          '/admin/',
+          '/cart/',
           '/checkout/',
-          '/_next/',
+          '/admin/login',
         ],
       },
     ],
-    sitemap: 'https://www.moemacollection.com/sitemap.xml',
+    sitemap: `${siteConfig.url}/sitemap.xml`,
   }
 }

@@ -3,6 +3,7 @@ import { Inter, Cormorant_Garamond } from "next/font/google";
 import QueryProvider from "@/components/providers/query-provider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { CookieConsent } from "@/components/layout/cookie-consent";
+import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
 const inter = Inter({
@@ -17,45 +18,59 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.moemacollection.com"),
+  metadataBase: new URL(siteConfig.url),
   title: {
-    template: "%s | MOEMA - Modern Leather Atelier",
-    default: "MOEMA - Modern Leather Atelier",
+    template: "%s | MOEMA",
+    default: "MOEMA | Premium Fashion Bags",
   },
-  description: "Discover luxury branded bags and modern sculpture with MOEMA. Handcrafted leather goods for the contemporary woman.",
-  keywords: ["luxury bags", "leather atelier", "designer handbags", "modern sculpture", "MOEMA"],
-  authors: [{ name: "MOEMA" }],
-  creator: "MOEMA",
-  publisher: "MOEMA",
+  description: siteConfig.description,
+  keywords: ["moema", "premium bags", "fashion bags", "designer handbags", "women bags", "luxury bags"],
+  authors: [{ name: "MOEMA Collection" }],
+  creator: "MOEMA Collection",
+  publisher: "MOEMA Collection",
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
-    locale: "en_US",
-    url: "https://www.moemacollection.com",
-    siteName: "MOEMA",
-    title: "MOEMA - Modern Leather Atelier",
-    description: "Discover luxury branded bags and modern sculpture with MOEMA.",
+    locale: "id_ID",
+    url: siteConfig.url,
+    siteName: siteConfig.siteName,
+    title: "MOEMA | Premium Fashion Bags",
+    description: siteConfig.description,
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "MOEMA - Modern Leather Atelier",
+        alt: "MOEMA premium fashion bags",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MOEMA - Modern Leather Atelier",
-    description: "Discover luxury branded bags and modern sculpture with MOEMA.",
+    title: "MOEMA | Premium Fashion Bags",
+    description: siteConfig.description,
     images: ["/og-image.png"],
     creator: "@moemacollection",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'MOEMA',
+  },
+  other: {
+    'theme-color': '#111111',
   },
 };
 
@@ -67,6 +82,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Preconnect to Typekit for faster font loading */}
+        <link rel="preconnect" href="https://use.typekit.net" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://p.typekit.net" crossOrigin="anonymous" />
+      </head>
       <body className={`${inter.variable} ${cormorant.variable} antialiased`}>
         <NuqsAdapter>
           <QueryProvider>
@@ -78,4 +98,3 @@ export default function RootLayout({
     </html>
   );
 }
-
