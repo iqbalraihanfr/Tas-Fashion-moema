@@ -10,8 +10,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function DeleteProductButton({ productId }: { productId: string }) {
+export function DeleteProductButton({
+  productId,
+  productName,
+}: {
+  productId: string;
+  productName?: string;
+}) {
   const [state, formAction, isPending] = useActionState(deleteProduct, undefined);
+  const ariaLabel = productName ? `Delete product: ${productName}` : "Delete product";
 
   return (
     <form action={formAction}>
@@ -23,6 +30,8 @@ export function DeleteProductButton({ productId }: { productId: string }) {
             size="icon"
             type="submit"
             disabled={isPending}
+            aria-label={ariaLabel}
+            title={ariaLabel}
             className="h-8 w-8 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-md"
           >
             {isPending ? (

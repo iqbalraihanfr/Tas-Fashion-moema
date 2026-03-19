@@ -448,6 +448,8 @@ export function ProductsTable({ products }: ProductsTableProps) {
                                   >
                                     <Link
                                       href={`/admin/dashboard/products/${product.id}/edit`}
+                                      aria-label={`Edit product: ${product.name}`}
+                                      title={`Edit product: ${product.name}`}
                                     >
                                       <Pencil className="h-4 w-4" />
                                     </Link>
@@ -460,16 +462,18 @@ export function ProductsTable({ products }: ProductsTableProps) {
                               <ArchiveProductButton
                                 productId={product.id}
                                 isArchived={false}
+                                productName={product.name}
                               />
-                              <DeleteProductButton productId={product.id} />
+                              <DeleteProductButton productId={product.id} productName={product.name} />
                             </>
                           ) : (
                             <>
                               <ArchiveProductButton
                                 productId={product.id}
                                 isArchived={true}
+                                productName={product.name}
                               />
-                              <DeleteProductButton productId={product.id} />
+                              <DeleteProductButton productId={product.id} productName={product.name} />
                             </>
                           )}
                         </div>

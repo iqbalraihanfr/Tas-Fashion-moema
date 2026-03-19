@@ -3,15 +3,6 @@ import { Order, OrderItem, Product } from "@/lib/types";
 import { format } from "date-fns";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -20,8 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { updateOrderStatus } from "@/lib/admin-actions";
-import { OrderSubmitButton } from "@/components/admin/order-submit-button";
+import { OrderStatusForm } from "@/components/admin/order-status-form";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -163,54 +153,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       {/* Update Status Form */}
       <div className="bg-background rounded-xl border shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-6">Update Order Status</h2>
-        <form action={async (formData) => { "use server"; await updateOrderStatus(formData); }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <input type="hidden" name="orderId" value={typedOrder.id} />
-          
-          <div className="space-y-2">
-            <Label htmlFor="paymentStatus">Payment Status</Label>
-            <Select name="paymentStatus" defaultValue={typedOrder.paymentStatus}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select payment status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="shippingStatus">Shipping Status</Label>
-            <Select name="shippingStatus" defaultValue={typedOrder.shippingStatus}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select shipping status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="idle">Idle</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="trackingNumber">Tracking Number</Label>
-            <Input
-              id="trackingNumber"
-              name="trackingNumber"
-              type="text"
-              defaultValue={typedOrder.trackingNumber || ""}
-              placeholder="Enter tracking number"
-              className="font-mono text-sm"
-            />
-          </div>
-
-          <div className="md:col-span-2 flex justify-end">
-            <OrderSubmitButton />
-          </div>
-        </form>
+        <OrderStatusForm order={typedOrder} />
       </div>
     </div>
   );

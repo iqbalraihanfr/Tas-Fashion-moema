@@ -13,11 +13,14 @@ import {
 interface ArchiveProductButtonProps {
   productId: string;
   isArchived: boolean;
+  productName?: string;
 }
 
-export function ArchiveProductButton({ productId, isArchived }: ArchiveProductButtonProps) {
+export function ArchiveProductButton({ productId, isArchived, productName }: ArchiveProductButtonProps) {
   const action = isArchived ? unarchiveProduct : archiveProduct;
   const [state, formAction, isPending] = useActionState(action, undefined);
+  const actionLabel = isArchived ? "Restore product" : "Archive product";
+  const ariaLabel = productName ? `${actionLabel}: ${productName}` : actionLabel;
 
   return (
     <form action={formAction}>
@@ -29,6 +32,8 @@ export function ArchiveProductButton({ productId, isArchived }: ArchiveProductBu
             size="icon"
             type="submit"
             disabled={isPending}
+            aria-label={ariaLabel}
+            title={ariaLabel}
             className="h-8 w-8 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-md"
           >
             {isPending ? (
@@ -41,7 +46,7 @@ export function ArchiveProductButton({ productId, isArchived }: ArchiveProductBu
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs">
-          {isArchived ? "Restore product" : "Archive product"}
+          {actionLabel}
         </TooltipContent>
       </Tooltip>
       {state?.error && <p className="text-red-500 text-xs mt-1">{state.error}</p>}

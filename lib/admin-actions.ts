@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { auth } from "@/auth";
 import * as productService from "@/services/product.service";
 import * as orderService from "@/services/order.service";
+import { AppError } from "@/lib/errors";
 
 // Zod schema for product validation
 const productSchema = z.object({
@@ -29,7 +31,29 @@ const orderStatusSchema = z.object({
   trackingNumber: z.string().nullable().optional(),
 });
 
+type AdminActionResult = {
+  success: boolean;
+  error?: string;
+};
+
+const ADMIN_SESSION_ERROR = "Your session has expired. Please sign in again.";
+
+async function requireAdminSession(): Promise<AdminActionResult | null> {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { success: false, error: ADMIN_SESSION_ERROR };
+  }
+
+  return null;
+}
+
 export async function createProduct(formData: FormData) {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const name = formData.get("name") as string;
   const baseName = formData.get("baseName") as string;
   const sku = formData.get("sku") as string;
@@ -73,9 +97,18 @@ export async function createProduct(formData: FormData) {
       stock: parsed.data.stock,
       images: parsed.data.newImages || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
-    return { success: false, error: error.message || "Failed to create product." };
+
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    if (error instanceof Error) {
+      return { success: false, error: error.message || "Failed to create product." };
+    }
+
+    return { success: false, error: "Failed to create product." };
   }
 
   revalidatePath('/admin/dashboard/products');
@@ -85,6 +118,11 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(formData: FormData) {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
   const baseName = formData.get("baseName") as string;
@@ -136,9 +174,18 @@ export async function updateProduct(formData: FormData) {
       images: parsed.data.newImages || [],
       existingImages: parsed.data.existingImages,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
-    return { success: false, error: error.message || "Failed to update product." };
+
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    if (error instanceof Error) {
+      return { success: false, error: error.message || "Failed to update product." };
+    }
+
+    return { success: false, error: "Failed to update product." };
   }
 
   revalidatePath('/admin/dashboard/products');
@@ -149,17 +196,27 @@ export async function updateProduct(formData: FormData) {
 }
 
 export async function deleteProduct(prevState: unknown, formData: FormData) {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const id = formData.get("productId") as string;
 
   if (!id) {
-    return { error: "Product ID is missing." };
+    return { success: false, error: "Product ID is missing." };
   }
 
   try {
     await productService.deleteProduct(id);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
-    return { error: "Failed to delete product." };
+
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: false, error: "Failed to delete product." };
   }
 
   revalidatePath('/admin/dashboard/products');
@@ -169,17 +226,27 @@ export async function deleteProduct(prevState: unknown, formData: FormData) {
 }
 
 export async function archiveProduct(prevState: unknown, formData: FormData) {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const id = formData.get("productId") as string;
 
   if (!id) {
-    return { error: "Product ID is missing." };
+    return { success: false, error: "Product ID is missing." };
   }
 
   try {
     await productService.archiveProduct(id);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
-    return { error: "Failed to archive product." };
+
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: false, error: "Failed to archive product." };
   }
 
   revalidatePath('/admin/dashboard/products');
@@ -189,17 +256,27 @@ export async function archiveProduct(prevState: unknown, formData: FormData) {
 }
 
 export async function unarchiveProduct(prevState: unknown, formData: FormData) {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const id = formData.get("productId") as string;
 
   if (!id) {
-    return { error: "Product ID is missing." };
+    return { success: false, error: "Product ID is missing." };
   }
 
   try {
     await productService.unarchiveProduct(id);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
-    return { error: "Failed to unarchive product." };
+
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: false, error: "Failed to unarchive product." };
   }
 
   revalidatePath('/admin/dashboard/products');
@@ -208,7 +285,15 @@ export async function unarchiveProduct(prevState: unknown, formData: FormData) {
   return { success: true };
 }
 
-export async function updateOrderStatus(formData: FormData): Promise<void> {
+export async function updateOrderStatus(
+  prevState: AdminActionResult | undefined,
+  formData: FormData
+): Promise<AdminActionResult> {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const orderId = formData.get("orderId") as string;
   const paymentStatus = formData.get("paymentStatus") as string;
   const shippingStatus = formData.get("shippingStatus") as string;
@@ -222,8 +307,10 @@ export async function updateOrderStatus(formData: FormData): Promise<void> {
   });
 
   if (!parsed.success) {
-    console.error("Invalid order status data:", parsed.error.issues[0].message);
-    return;
+    return {
+      success: false,
+      error: parsed.error.issues[0].message || "Invalid order status data.",
+    };
   }
 
   try {
@@ -232,13 +319,23 @@ export async function updateOrderStatus(formData: FormData): Promise<void> {
       shippingStatus: parsed.data.shippingStatus,
       trackingNumber: parsed.data.trackingNumber ?? null,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to update order status:", error);
-    return;
+
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    if (error instanceof Error) {
+      return { success: false, error: error.message || "Failed to update order status." };
+    }
+
+    return { success: false, error: "Failed to update order status." };
   }
 
   revalidatePath(`/admin/dashboard/orders/${orderId}`);
   revalidatePath('/admin/dashboard/orders');
+  return { success: true };
 }
 
 // =============================================
@@ -252,6 +349,11 @@ import {
 export async function createColorAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const name = (formData.get("name") as string)?.trim();
   const hex  = (formData.get("hex")  as string)?.trim();
 
@@ -261,8 +363,16 @@ export async function createColorAction(
 
   try {
     await createColorRepo(name, hex);
-  } catch (e: any) {
-    return { success: false, error: e.message || "Failed to save color." };
+  } catch (error: unknown) {
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    if (error instanceof Error) {
+      return { success: false, error: error.message || "Failed to save color." };
+    }
+
+    return { success: false, error: "Failed to save color." };
   }
 
   revalidatePath('/admin/dashboard/colors');
@@ -274,6 +384,11 @@ export async function createColorAction(
 export async function deleteColorAction(
   id: string
 ): Promise<{ success: boolean; error?: string; usedBy?: string[] }> {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   try {
     const result = await deleteColorRepo(id);
     if (result !== null) {
@@ -283,8 +398,16 @@ export async function deleteColorAction(
         error: `Color is used by ${result.usedBy.length} active product(s).`,
       };
     }
-  } catch (e: any) {
-    return { success: false, error: e.message || "Failed to delete color." };
+  } catch (error: unknown) {
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    if (error instanceof Error) {
+      return { success: false, error: error.message || "Failed to delete color." };
+    }
+
+    return { success: false, error: "Failed to delete color." };
   }
 
   revalidatePath('/admin/dashboard/colors');
@@ -308,6 +431,11 @@ const showcaseSchema = z.object({
 });
 
 export async function createShowcase(formData: FormData) {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const title = formData.get("title") as string;
   const subtitleRaw = formData.get("subtitle") as string;
   const subtitle = subtitleRaw || null;
@@ -341,9 +469,18 @@ export async function createShowcase(formData: FormData) {
       is_active: parsed.data.is_active,
       image,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
-    return { success: false, error: error.message || "Failed to create showcase." };
+
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    if (error instanceof Error) {
+      return { success: false, error: error.message || "Failed to create showcase." };
+    }
+
+    return { success: false, error: "Failed to create showcase." };
   }
 
   revalidatePath('/admin/dashboard/showcase');
@@ -352,6 +489,11 @@ export async function createShowcase(formData: FormData) {
 }
 
 export async function updateShowcase(formData: FormData) {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const id = formData.get("id") as string;
   const title = formData.get("title") as string;
   const subtitleRaw = formData.get("subtitle") as string;
@@ -384,9 +526,18 @@ export async function updateShowcase(formData: FormData) {
       is_active: parsed.data.is_active,
       image: image && image.size > 0 ? image : undefined,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
-    return { success: false, error: error.message || "Failed to update showcase." };
+
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    if (error instanceof Error) {
+      return { success: false, error: error.message || "Failed to update showcase." };
+    }
+
+    return { success: false, error: "Failed to update showcase." };
   }
 
   revalidatePath('/admin/dashboard/showcase');
@@ -395,17 +546,27 @@ export async function updateShowcase(formData: FormData) {
 }
 
 export async function deleteShowcase(prevState: unknown, formData: FormData) {
+  const authError = await requireAdminSession();
+  if (authError) {
+    return authError;
+  }
+
   const id = formData.get("showcaseId") as string;
 
   if (!id) {
-    return { error: "Showcase ID is missing." };
+    return { success: false, error: "Showcase ID is missing." };
   }
 
   try {
     await showcaseService.deleteShowcase(id);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
-    return { error: "Failed to delete showcase." };
+
+    if (error instanceof AppError) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: false, error: "Failed to delete showcase." };
   }
 
   revalidatePath('/admin/dashboard/showcase');

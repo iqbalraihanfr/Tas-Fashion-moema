@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createShowcase, updateShowcase } from "@/lib/admin-actions";
 import { Showcase } from "@/lib/types";
@@ -28,6 +29,7 @@ interface ShowcaseFormProps {
 export default function ShowcaseForm({ initialData, existingHeroId }: ShowcaseFormProps) {
   const isEditMode = !!initialData;
   const initialType: ShowcaseType = initialData?.position === 0 ? "hero" : "category";
+  const router = useRouter();
 
   const [showcaseType, setShowcaseType] = useState<ShowcaseType>(initialType);
   const [preview, setPreview] = useState<string | null>(
@@ -131,11 +133,18 @@ export default function ShowcaseForm({ initialData, existingHeroId }: ShowcaseFo
 
     setSubmitError(null);
     try {
-      if (isEditMode) {
-        await updateShowcase(formData);
-      } else {
-        await createShowcase(formData);
+      const result = isEditMode
+        ? await updateShowcase(formData)
+        : await createShowcase(formData);
+
+      if (!result.success) {
+        setSubmitError(result.error || "Terjadi kesalahan saat menyimpan showcase.");
+        setIsSubmitting(false);
+        return;
       }
+
+      router.push("/admin/dashboard/showcase");
+      router.refresh();
     } catch (error) {
       console.error(error);
       const message = error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan showcase.";
