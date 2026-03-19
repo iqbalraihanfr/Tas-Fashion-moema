@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git -C /Users/iqbalrei/ZERTOV/tasfashione-commerce add components/ui/product-card.tsx)",
+      "Bash(git -C /Users/iqbalrei/ZERTOV/tasfashione-commerce commit -m \"feat\\(product-card\\): rewrite as client component with dynamic color swatches\")",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm exec:*)"
+    ]
+  }
+}
