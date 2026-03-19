@@ -10,19 +10,22 @@ export function groupProductsByBaseName(products: Product[]): ProductGroup[] {
   const map = new Map<string, ProductGroup>();
 
   for (const product of products) {
-    if (!product.baseName) continue;
+    const baseName = product.baseName?.trim();
+    const slug = product.slug?.trim();
 
-    if (!map.has(product.baseName)) {
-      map.set(product.baseName, {
-        baseName: product.baseName,
+    if (!baseName || !slug) continue;
+
+    if (!map.has(baseName)) {
+      map.set(baseName, {
+        baseName,
         category: product.category,
         variants: [],
       });
     }
 
-    map.get(product.baseName)!.variants.push({
+    map.get(baseName)!.variants.push({
       id: product.id,
-      slug: product.slug,
+      slug,
       color: product.color,
       price: product.price,
       images: product.images,
@@ -30,5 +33,5 @@ export function groupProductsByBaseName(products: Product[]): ProductGroup[] {
     });
   }
 
-  return Array.from(map.values());
+  return Array.from(map.values()).filter((group) => group.variants.length > 0);
 }

@@ -15,6 +15,10 @@ export default function ProductCard({ group, colorMap }: ProductCardProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeVariant = group.variants[activeIndex];
 
+  if (!activeVariant?.slug) {
+    return null;
+  }
+
   const imageUrl = activeVariant.images?.[0] ?? "/placeholder-bag.jpg";
   const hoverImageUrl = activeVariant.images?.[1] ?? imageUrl;
 

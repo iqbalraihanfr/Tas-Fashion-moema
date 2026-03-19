@@ -114,6 +114,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     .from('Product')
     .select('*')
     .eq('slug', slug)
+    .eq('is_archived', false)
     .single();
 
   if (error && error.code !== 'PGRST116') {
