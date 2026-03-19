@@ -62,6 +62,7 @@ pnpm test:e2e
 pnpm test:e2e:mobile
 pnpm test:e2e:smoke
 pnpm test:qa
+pnpm cleanup:qa-data
 ```
 
 Catatan:
@@ -71,6 +72,7 @@ Catatan:
 - `pnpm test:e2e:mobile` menjalankan baseline storefront mobile di `Mobile Chrome` dan `Mobile Safari`.
 - `pnpm test:e2e:smoke` menjalankan baseline smoke suite secara serial (`--workers=1`) agar mutation admin tidak saling bentrok di environment yang sama.
 - `pnpm test:qa` menjalankan Vitest lalu smoke E2E.
+- `pnpm cleanup:qa-data` menghapus sisa data QA Playwright di Supabase untuk product/showcase/color/order.
 
 ---
 
@@ -110,6 +112,7 @@ Flow E2E yang dianggap core saat ini:
 7. Admin showcase smoke: create → edit → delete
 8. Admin order smoke: fresh order → admin status update
 9. Semua smoke flow aktif diverifikasi di desktop Chrome, mobile Chrome, dan mobile Safari, kecuali admin smoke yang sengaja desktop-only
+10. Mobile cart footer dan mobile checkout footer diverifikasi pada viewport pendek
 
 ### Playwright config
 
@@ -137,10 +140,13 @@ Flow E2E yang dianggap core saat ini:
 - Reusable helper ada di:
   - `tests/e2e/helpers/storefront.ts`
   - `tests/e2e/helpers/admin.ts`
+  - `tests/e2e/helpers/qa-cleanup.ts`
 - Storefront mobile hardening yang sekarang dijaga smoke:
   - mobile search state di header
   - sticky add-to-bag bar setelah scroll PDP
   - cart / filter / checkout flow pada viewport mobile
+  - short viewport footer visibility pada cart dan checkout
+- Admin smoke yang membuat data QA sekarang dibungkus cleanup `finally` agar sisa data test tidak menumpuk bila flow gagal di tengah.
 
 ---
 

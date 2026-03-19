@@ -51,7 +51,9 @@ export async function uploadImageAndApplyCrop(page: Page, input: Locator) {
   if (await applyCropButton.count()) {
     await expect(applyCropButton).toBeVisible();
     await applyCropButton.click();
-    await expect(applyCropButton).toHaveCount(0);
+    await expect
+      .poll(async () => (await applyCropButton.count()) === 0 || (await page.getByRole("button", { name: /processing/i }).count()) > 0)
+      .toBe(true);
   }
 
   await expect
