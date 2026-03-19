@@ -1,520 +1,174 @@
 # 05 · TESTING & QA CONTEXT
 
-> ⚠️ **INI ADALAH TEMPLATE** — bukan context file project aktual.
-> Isi semua bagian yang ditandai `[CUSTOMIZE]`. Hapus blok ini setelah selesai.
-
-> **Baca saat:** menulis test, mereview coverage, atau memutuskan apa yang perlu di-test.
-> Test bukan untuk membuktikan kode benar — tapi untuk mendeteksi ketika kode jadi salah.
+> Nama file ini masih memakai suffix `template`, tetapi isi file ini sekarang adalah konteks aktual proyek.
+> Gunakan saat menulis test, menilai coverage, atau memutuskan regression mana yang wajib dijaga.
 
 ---
 
-## 1. FILOSOFI TESTING
+## 1. Testing Philosophy
 
-Analogi: Test adalah **jaring pengaman** sirkus. Akrobat tetap perlu latihan (kode yang baik), tapi jaring ada untuk menangkap ketika sesuatu yang tidak terduga terjadi. Tujuan bukan agar akrobat selalu jatuh ke jaring — tapi agar tim bisa bergerak cepat tanpa takut.
+Tujuan testing di repo ini adalah menjaga flow bisnis utama tetap aman ketika fitur storefront, checkout, admin mutation, atau filter catalog berubah.
 
-> Testing criteria di level fitur: lihat `01-product-context.md` Section Definition of Done.
+Prioritas pengujian:
 
-**Apa yang di-test:**
-- Business logic yang kompleks dan punya banyak edge case
-- Integrasi antara komponen penting (service + database)
-- User flow utama dari perspektif end-user
-- Security concerns (auth, permission, ownership, input validation)
+- Business logic di `services/*`
+- Pure utility di `lib/*`
+- Security contract di `lib/admin-actions.ts`
+- Flow pengguna utama yang benar-benar menghasilkan nilai bisnis
 
-**Apa yang tidak di-test:**
-- Implementasi detail internal (method private, naming, dll.)
-- Third-party library (ORM, Auth, dll. — mereka punya test sendiri)
-- UI yang pure presentational (render dengan props, hasilnya obvious)
+Yang tidak perlu terlalu dikejar:
 
----
-
-## 2. TESTING PYRAMID
-
-```
-          ▲
-         /E2E\          Sedikit — lambat, tapi paling realistis
-        /─────\         Playwright
-       /  Integ \       Medium — test beberapa layer bersamaan
-      /──────────\      Vitest + test database
-     /   Unit     \     Banyak — cepat, isolasi, per-function
-    /______________\    Vitest
-```
-
-**Rasio target**: 70% unit / 20% integration / 10% E2E
+- Presentational UI sederhana
+- Implementasi internal library pihak ketiga
+- Snapshot besar yang rapuh
 
 ---
 
-## 3. SETUP
+## 2. Current Test Stack
 
-### Vitest (Unit + Integration)
-
-```typescript
-// vitest.config.ts
-import { defineConfig } from 'vitest/config'
-import { resolve } from 'path'
-
-export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'node',
-    setupFiles: ['./tests/setup.ts'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'html'],
-      include: ['src/features/**', 'src/lib/**'],
-      exclude: ['src/features/**/components/**'],  // UI tidak di-cover vitest
-      thresholds: {
-        functions: 80,
-        branches: 75,
-        lines: 80,
-      }
-    }
-  },
-  resolve: {
-    alias: { '@': resolve(__dirname, './src') }
-  }
-})
+```txt
+Unit / service tests : Vitest + Testing Library
+E2E                  : Playwright
+DOM environment      : jsdom
 ```
 
-### Test Database Setup
+### File yang Sudah Ada
 
-```typescript
-// tests/setup.ts
-// [CUSTOMIZE — sesuaikan dengan database/ORM yang dipakai]
-
-// Contoh: Prisma + PostgreSQL
-import { beforeAll, afterAll, afterEach } from 'vitest'
-import { db } from '@/lib/db'
-
-beforeAll(async () => {
-  await db.$connect()
-})
-
-afterEach(async () => {
-  // [CUSTOMIZE — cleanup tables sesuai domain project, order matters (FK constraints)]
-  await db.order.deleteMany()
-  await db.product.deleteMany()
-  await db.user.deleteMany()
-})
-
-afterAll(async () => {
-  await db.$disconnect()
-})
-```
-
-### Playwright (E2E)
-
-```typescript
-// playwright.config.ts
-import { defineConfig, devices } from '@playwright/test'
-
-export default defineConfig({
-  testDir: './tests/e2e',
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  reporter: 'html',
-
-  use: {
-    baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-  },
-
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'Mobile Chrome', use: { ...devices['Pixel 5'] } },
-  ],
-
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-  },
-})
-```
+- `tests/lib/cart-logic.test.ts`
+- `tests/services/product.service.test.ts`
+- `tests/services/order.service.test.ts`
+- `tests/components/ui/button.test.tsx`
+- `tests/lib/admin-actions.test.ts`
+- `tests/e2e/catalog-filters.spec.ts`
+- `tests/e2e/guest-checkout.spec.ts`
+- `tests/e2e/storefront-smoke.spec.ts`
+- `tests/e2e/mobile-navigation.spec.ts`
+- `tests/e2e/admin-smoke.spec.ts`
+- `tests/e2e/admin-product-smoke.spec.ts`
+- `tests/e2e/admin-showcase-smoke.spec.ts`
+- `tests/e2e/admin-order-smoke.spec.ts`
+- `tests/e2e/cart-regression.spec.ts`
 
 ---
 
-## 4. UNIT TEST — SERVICE LAYER
+## 3. Commands
 
-> Contoh di bawah menggunakan domain `products` sebagai ilustrasi.
-> `[CUSTOMIZE]` — ganti dengan domain aktual project dari `01-product-context.md` Section Domain Model.
->
-> Service adalah target utama unit test karena mengandung business logic.
-> Layer structure: lihat `02-architecture-context.md` Section Pola Per Layer.
+Gunakan command berikut:
 
-```typescript
-// features/products/services.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { productService } from './services'
-import { productQueries } from './queries'
-
-// Mock queries — kita test logic, bukan database
-vi.mock('./queries')
-
-describe('productService', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  describe('create', () => {
-    it('should create product when name is unique', async () => {
-      // Arrange
-      vi.mocked(productQueries.findByName).mockResolvedValue(null)
-      vi.mocked(productQueries.create).mockResolvedValue({
-        id: 'prod_1',
-        name: 'Test Product',
-        price: 100000,
-        stock: 10,
-        createdAt: new Date(),
-      })
-
-      // Act
-      const result = await productService.create({
-        name: 'Test Product',
-        price: 100000,
-        stock: 10,
-      })
-
-      // Assert
-      expect(result.name).toBe('Test Product')
-      expect(productQueries.create).toHaveBeenCalledOnce()
-    })
-
-    it('should throw error when product name already exists', async () => {
-      // Arrange
-      vi.mocked(productQueries.findByName).mockResolvedValue({
-        id: 'existing',
-        name: 'Test Product',
-      } as any)
-
-      // Act & Assert
-      await expect(
-        productService.create({ name: 'Test Product', price: 100000, stock: 10 })
-      ).rejects.toThrow('Produk dengan nama ini sudah ada')
-    })
-
-    it('should throw error when price is negative', async () => {
-      await expect(
-        productService.create({ name: 'Test', price: -1, stock: 10 })
-      ).rejects.toThrow()
-    })
-  })
-})
+```bash
+pnpm test
+pnpm test:watch
+pnpm test:e2e
+pnpm test:e2e:smoke
+pnpm test:qa
 ```
 
----
+Catatan:
 
-## 5. INTEGRATION TEST — ACTION + SERVICE + DB
-
-> Contoh di bawah menggunakan domain `products` sebagai ilustrasi.
-> `[CUSTOMIZE]` — ganti dengan domain aktual project.
->
-> Test yang menyentuh database sungguhan (test DB).
-
-```typescript
-// features/products/actions.test.ts
-import { describe, it, expect } from 'vitest'
-import { createProductAction } from './actions'
-import { db } from '@/lib/db'
-
-// [CUSTOMIZE — buat helper sesuai domain project]
-async function createAdminUser() {
-  return db.user.create({
-    data: {
-      email: 'admin@test.com',
-      name: 'Admin',
-      role: 'admin',
-    }
-  })
-}
-
-describe('createProductAction', () => {
-  it('should create product with valid data', async () => {
-    const admin = await createAdminUser()
-
-    const formData = new FormData()
-    formData.append('name', 'Laptop Gaming')
-    formData.append('price', '15000000')
-    formData.append('stock', '5')
-
-    // Mock auth session
-    vi.mock('@/lib/auth', () => ({
-      requireAuth: vi.fn().mockResolvedValue({ user: admin }),
-    }))
-
-    const result = await createProductAction(formData)
-
-    expect(result.error).toBeNull()
-    expect(result.data?.name).toBe('Laptop Gaming')
-
-    // Verify actually saved to DB
-    const saved = await db.product.findFirst({ where: { name: 'Laptop Gaming' } })
-    expect(saved).toBeDefined()
-  })
-
-  it('should return validation error for invalid price', async () => {
-    const formData = new FormData()
-    formData.append('name', 'Product')
-    formData.append('price', '-1000')  // invalid
-
-    const result = await createProductAction(formData)
-
-    expect(result.error).toBeDefined()
-    expect(result.data).toBeNull()
-  })
-})
-```
+- `pnpm test` menjalankan suite Vitest non-E2E.
+- `pnpm test:e2e` memakai Playwright dan akan menyalakan dev server lewat config.
+- `pnpm test:e2e:smoke` menjalankan baseline smoke suite secara serial (`--workers=1`) agar mutation admin tidak saling bentrok di environment yang sama.
+- `pnpm test:qa` menjalankan Vitest lalu smoke E2E.
 
 ---
 
-## 6. SECURITY TEST PATTERNS
+## 4. Vitest Rules
 
-> **AI RULE:** Setiap fitur yang punya auth/permission check WAJIB punya minimal test-test di bawah ini.
-> Detail security rules per layer: lihat `03-security-context.md` Section Security Rules Per Layer.
+### Scope utama Vitest
 
-### Wajib di-test:
+- `lib/*` pure logic
+- `services/*` business logic
+- `lib/admin-actions.ts` untuk auth guard, validasi, dan kontrak error
 
-1. **Unauthorized access** — action tanpa session harus return error
-2. **Wrong role** — user biasa akses admin action harus ditolak
-3. **Ownership violation** — user A nggak bisa akses/edit data user B
-4. **Invalid input** — schema validation harus reject input berbahaya
+### Pola yang dipakai
 
-### Contoh
+- Mock repository atau dependency I/O
+- Test perilaku, bukan detail implementasi
+- Untuk server action, verifikasi payload return dan side effect penting
 
-> `[CUSTOMIZE]` — ganti domain dan action name dengan yang aktual.
+### Contoh area yang wajib dijaga
 
-```typescript
-describe('security: createProductAction', () => {
-  it('should reject unauthenticated request', async () => {
-    vi.mock('@/lib/auth', () => ({
-      requireAuth: vi.fn().mockRejectedValue(new Error('UNAUTHORIZED')),
-    }))
-
-    const formData = new FormData()
-    formData.append('name', 'Test')
-
-    const result = await createProductAction(formData)
-    expect(result.error).toBeDefined()
-  })
-
-  it('should reject non-admin user', async () => {
-    vi.mock('@/lib/auth', () => ({
-      requireAuth: vi.fn().mockResolvedValue({
-        user: { id: 'user_1', role: 'user' }
-      }),
-    }))
-
-    const result = await createProductAction(new FormData())
-    expect(result.error).toContain('izin')
-  })
-
-  it('should reject ownership violation', async () => {
-    // [CUSTOMIZE — test bahwa user A tidak bisa akses data user B]
-    vi.mock('@/lib/auth', () => ({
-      requireAuth: vi.fn().mockResolvedValue({
-        user: { id: 'user_A', role: 'user' }
-      }),
-    }))
-
-    // Attempt to access/edit data owned by user_B
-    const result = await updateProductAction('product_owned_by_B', new FormData())
-    expect(result.error).toBeDefined()
-  })
-})
-```
+- `order.service.placeOrder`
+- `product.service.createProduct` / `updateProduct`
+- admin mutations tanpa session
+- validasi status order dan form payload
 
 ---
 
-## 7. E2E TEST — USER FLOW
+## 5. E2E Rules
 
-> Contoh di bawah menggunakan flow auth + products sebagai ilustrasi.
-> `[CUSTOMIZE]` — ganti dengan user flow aktual project dari `01-product-context.md` Section User Flows.
+Flow E2E yang dianggap core saat ini:
 
-```typescript
-// tests/e2e/auth.spec.ts
-import { test, expect } from '@playwright/test'
+1. Filter catalog mengubah URL state via `nuqs`
+2. Guest checkout dari catalog sampai redirect WhatsApp
+3. Storefront smoke: browse → PDP → add to bag → cart / checkout shell
+4. Cart regression: quantity update, remove item, persistence after reload
+5. Admin smoke: login → navigate dashboard → color CRUD ringan
+6. Admin product smoke: create → archive → restore → delete
+7. Admin showcase smoke: create → edit → delete
+8. Admin order smoke: fresh order → admin status update
+9. Semua smoke flow aktif diverifikasi di desktop Chrome dan mobile Chrome, kecuali admin smoke yang sengaja desktop-only
 
-test.describe('Authentication Flow', () => {
-  test('user can register and login', async ({ page }) => {
-    // Register
-    await page.goto('/register')
-    await page.getByLabel('Nama').fill('John Doe')
-    await page.getByLabel('Email').fill('john@example.com')
-    await page.getByLabel('Password').fill('SecurePass123!')
-    await page.getByRole('button', { name: 'Daftar' }).click()
+### Playwright config
 
-    await expect(page).toHaveURL(/dashboard|verify/)
-    await expect(page.getByText('Selamat datang')).toBeVisible()
-  })
+- Browser: desktop Chrome + mobile Chrome
+- Screenshot: only on failure
+- Trace: on first retry
+- Web server: `pnpm dev`
+- Smoke command resmi dijalankan serial (`--workers=1`) karena suite ini memutasi data shared yang sama di backend
 
-  test('user cannot access dashboard when not logged in', async ({ page }) => {
-    await page.goto('/dashboard')
-    await expect(page).toHaveURL('/login')
-  })
-})
+### Admin E2E Credentials
 
-// tests/e2e/products.spec.ts
-// [CUSTOMIZE — ganti dengan domain aktual]
-test.describe('Products', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/login')
-    await page.getByLabel('Email').fill('admin@example.com')
-    await page.getByLabel('Password').fill('password')
-    await page.getByRole('button', { name: 'Login' }).click()
-    await page.waitForURL('/dashboard')
-  })
+- Default local fallback mengikuti `scripts/seed-admin.ts`
+- Bisa dioverride dengan:
+  - `PLAYWRIGHT_ADMIN_EMAIL`
+  - `PLAYWRIGHT_ADMIN_PASSWORD`
 
-  test('admin can create a product', async ({ page }) => {
-    await page.goto('/dashboard/products/new')
-    await page.getByLabel('Nama Produk').fill('Laptop Gaming X')
-    await page.getByLabel('Harga').fill('15000000')
-    await page.getByRole('button', { name: 'Simpan Produk' }).click()
+### Current Smoke Baseline
 
-    await expect(page.getByText('Produk berhasil dibuat')).toBeVisible()
-    await expect(page).toHaveURL('/dashboard/products')
-  })
-})
-```
+- Verified locally: gunakan hasil `pnpm test:e2e:smoke` terbaru sebelum release
+- Skip yang sekarang diharapkan:
+  - `tests/e2e/admin-smoke.spec.ts` pada project mobile, karena admin workspace belum ditargetkan sebagai mobile flow utama
+  - `tests/e2e/admin-product-smoke.spec.ts` pada project mobile
+  - `tests/e2e/admin-showcase-smoke.spec.ts` pada project mobile
+  - `tests/e2e/admin-order-smoke.spec.ts` pada project mobile
+- Reusable helper ada di:
+  - `tests/e2e/helpers/storefront.ts`
+  - `tests/e2e/helpers/admin.ts`
 
 ---
 
-## 8. TEST UTILITIES & HELPERS
+## 6. Security Testing Minimum
 
-> Buat factory function untuk setiap domain di `01-product-context.md` Section Domain Model.
-> Naming: `create[Entity]Factory` — contoh: `createUserFactory`, `createNoteFactory`
-> `[CUSTOMIZE]` — ganti contoh di bawah dengan domain aktual project.
+Setiap admin mutation penting minimal harus punya coverage untuk:
 
-### Pattern
+1. Unauthenticated request ditolak
+2. Invalid payload ditolak
+3. Successful payload memanggil service yang benar
+4. Revalidation berjalan pada route yang terdampak
 
-```typescript
-// tests/helpers/index.ts
-
-// Satu factory per entity — input type harus match schema di features/{domain}/schemas.ts
-// [CUSTOMIZE — buat factory untuk setiap entity di domain model]
-
-export function createProductFactory(overrides?: Partial<CreateProductInput>) {
-  return {
-    name: 'Default Product',
-    price: 100000,
-    stock: 10,
-    ...overrides,
-  }
-}
-
-export function createUserFactory(overrides?: Partial<CreateUserInput>) {
-  return {
-    email: `user-${Date.now()}@test.com`,
-    name: 'Test User',
-    role: 'user' as const,
-    ...overrides,
-  }
-}
-
-// Mock session — [CUSTOMIZE — sesuaikan fields dengan auth library]
-export function mockSession(user?: Partial<User>) {
-  return {
-    user: {
-      id: 'user_test',
-      email: 'test@example.com',
-      name: 'Test User',
-      role: 'user',
-      ...user,
-    },
-    expires: new Date(Date.now() + 86400000).toISOString(),
-  }
-}
-```
+Saat menambah admin action baru, tambahkan test di `tests/lib/admin-actions.test.ts` atau file test domain yang setara.
 
 ---
 
-## 9. CI PIPELINE — TESTING
+## 7. Practical QA Guidance
 
-> `[CUSTOMIZE]` — sesuaikan database service dan setup commands dengan stack project.
-> Detail CI/CD lengkap: lihat `08-devops-context.md`.
-
-### Urutan wajib (berlaku di semua project):
-
-1. Type check (`tsc --noEmit`)
-2. Lint (`eslint`)
-3. Unit tests
-4. Integration tests (butuh database)
-5. E2E tests (butuh running app)
-
-```yaml
-# .github/workflows/test.yml
-# [CUSTOMIZE — sesuaikan services, env vars, dan setup commands]
-name: Test
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    services:
-      # [CUSTOMIZE — sesuaikan database service]
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - run: npm ci
-
-      - name: Run type check
-        run: npm run type-check
-
-      - name: Run linting
-        run: npm run lint
-
-      - name: Run unit tests
-        run: npm run test:unit
-
-      - name: Run integration tests
-        env:
-          # [CUSTOMIZE — sesuaikan env vars]
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-        run: |
-          npx prisma db push
-          npm run test:integration
-
-      - name: Run E2E tests
-        run: npm run test:e2e
-```
+- Jika perubahan menyentuh `nuqs`, update atau tambah E2E catalog filter.
+- Jika perubahan menyentuh checkout/cart/order, update unit test service dan pertimbangkan E2E checkout.
+- Jika perubahan menyentuh auth admin, tambahkan test action-level, bukan hanya middleware assumption.
+- Jika perubahan hanya kosmetik murni, test baru tidak wajib.
 
 ---
 
-## 10. COVERAGE TARGETS
+## 8. Current Gaps
 
-> Layer names sesuai `02-architecture-context.md` Section Pola Per Layer.
+- Belum ada integration test dengan Supabase test database sungguhan.
+- Belum ada coverage gate di CI.
+- E2E admin product edit flow belum cukup stabil untuk masuk smoke suite; saat ini smoke product fokus pada create/archive/restore/delete.
+- Lint global repo masih punya issue legacy di luar scope test setup.
 
-| Layer | Target | Alasan |
-|-------|--------|--------|
-| `services.ts` | ≥ 90% | Business logic — paling kritis |
-| `schemas.ts` | ≥ 85% | Validasi edge cases |
-| `queries.ts` | ≥ 70% | Covered lewat integration test |
-| `actions.ts` | ≥ 75% | Covered lewat integration test |
-| `components/` | Tidak wajib | E2E sudah cover flow utama |
+Jika ingin menaikkan level QA berikutnya, prioritas terbaik adalah:
 
----
-
-## 11. CHECKLIST TESTING
-
-> Gunakan sebelum merge PR.
-> Lihat juga: `01-product-context.md` Section Definition of Done.
-
-- [ ] Unit test untuk setiap business rule baru di `services.ts`
-- [ ] Security test untuk setiap action yang punya auth/permission check
-- [ ] Integration test untuk Server Action baru
-- [ ] E2E test untuk user flow baru (kalau ada)
-- [ ] Tidak ada test yang di-skip (`test.skip`) tanpa alasan
-- [ ] Coverage tidak turun dari threshold
-- [ ] Semua test pass di CI
+1. Stabilkan E2E admin product edit flow dan masukkan ke smoke suite
+2. Tambah integration test yang memeriksa action + service contract lebih dalam
+3. Tambah CI job untuk `pnpm test` dan `pnpm test:e2e` sesuai environment

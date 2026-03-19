@@ -1,273 +1,209 @@
 # 00 · MASTER CONTEXT
 
-> Baca file ini PERTAMA KALI sebelum melakukan apapun.
-> File ini adalah orchestrator — pointer ke semua konteks yang kamu butuhkan.
+> Baca file ini terlebih dahulu sebelum menambah fitur, refactor, atau review implementasi.
+> File ini adalah source of truth proyek, bukan template generik.
 
 ---
 
-## 1. IDENTITAS PROYEK
+## 1. Identitas Proyek
 
-| Key                   | Value                                                                                                                 |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Nama Aplikasi**     | `MOEMA` — branding: `MOEMA Fashion Bags`                                                                              |
-| **Deskripsi Singkat** | Premium Fashion E-commerce Platform (Terinspirasi oleh PEDRO & Charles & Keith) dengan katalog tas fashion eksklusif. |
-| **Tipe Aplikasi**     | Full-stack Web App — Supabase sebagai database + Storage, custom admin panel di `/admin`                              |
-| **Target User**       | Pelanggan retail e-commerce premium & Admin platform                                                                  |
-| **Stage**             | MVP — Manajemen produk dengan kompresi gambar (WebP) & dashboard admin, public storefront                             |
-| **Domain / URL**      | `[CUSTOMIZE]`                                                                                                         |
-| **Author**            | Iqbal Raihan                                                                                                          |
-| **Contact / Links**   | `[CUSTOMIZE]` — email, GitHub, LinkedIn, dll.                                                                         |
+| Key | Value |
+| --- | --- |
+| Nama aplikasi | `MOEMA` |
+| Branding | `MOEMA Fashion Bags` / `MOEMA Collection` |
+| Tipe aplikasi | Full-stack fashion e-commerce dengan admin panel custom |
+| Domain utama | `moemacollection.com` |
+| Stage | MVP yang sudah berjalan |
+| Audience | Pelanggan retail dan admin internal |
 
 ---
 
-## 2. TECH STACK (CORE STACK)
+## 2. Core Stack
 
-> **AI RULE:** Jangan tambahkan dependency baru tanpa diskusi eksplisit dengan developer.
-
-```
-Frontend    : Next.js 16 (App Router) + TypeScript Strict Mode
-Styling     : Tailwind CSS v4 + Shadcn UI
-State (URL) : nuqs (Type-safe search params - Priority #1)
-State (API) : TanStack Query (Server State)
-State (UI)  : React Context (Hanya untuk non-shareable global UI)
-Database    : Supabase (PostgreSQL) + Supabase Storage (Gambar produk)
-Auth        : NextAuth.js (v5 Beta) — Credentials provider untuk Admin
+```txt
+Frontend    : Next.js 16 App Router + TypeScript strict
+Styling     : Tailwind CSS v4 + shadcn/ui
+URL state   : nuqs
+Server state: TanStack Query
+UI state    : React Context
+Database    : Supabase Postgres
+Storage     : Supabase Storage
+Auth        : NextAuth.js v5 beta (Credentials for admin only)
 Validation  : Zod + React Hook Form
-Testing     : Vitest + React Testing Library + Playwright (E2E)
+Testing     : Vitest + React Testing Library + Playwright
 ```
 
-### Dependency Rules
+### Rules
 
-- ❌ Jangan tambah dependency baru tanpa diskusi
-- ❌ Jangan suggest migrasi database, auth, atau framework
-- ❌ Jangan buat folder top-level baru di luar yang sudah didefinisikan di `02-architecture-context.md`
-- ✅ Boleh suggest improvement dalam batasan stack yang sudah ada
+- Jangan tambah dependency baru tanpa diskusi.
+- Jangan ganti framework, auth provider, atau database tanpa keputusan eksplisit.
+- Hindari refactor folder besar-besaran jika perubahan bisa dilakukan incremental.
 
 ---
 
-## 3. CONVENTIONS
+## 3. Keputusan Penting
 
-| Aspek                          | Aturan                                     | Contoh                                      |
-| ------------------------------ | ------------------------------------------ | ------------------------------------------- |
-| Code comments                  | `[CUSTOMIZE]` — EN / ID / bilingual        | `// Validate before save`                   |
-| Commit message                 | `[CUSTOMIZE]` — conventional commits, dll. | `feat(notes): add slug generation`          |
-| Branch naming                  | `[CUSTOMIZE]`                              | `feat/add-note-editor`, `fix/auth-redirect` |
-| Error messages (user-facing)   | `[CUSTOMIZE]` — EN / ID / bilingual        | `"Email tidak valid"`                       |
-| Error messages (developer/log) | `[CUSTOMIZE]`                              | `"Failed to fetch user"`                    |
-| Env variable naming            | SCREAMING_SNAKE_CASE                       | `DATABASE_URL`                              |
-
-> Untuk naming conventions kode (file, komponen, fungsi): lihat `02-architecture-context.md` Section Naming Conventions.
+| Keputusan | Alasan |
+| --- | --- |
+| Bucket produk memakai `product-images`, bukan `products` | Memisahkan aset produk dari aset lain dan memudahkan policy/operational limit per bucket |
+| Upload produk memakai hybrid pipeline: preprocess ringan di client, normalisasi final di server dengan `sharp` | Admin UX tetap nyaman saat preview/crop, tetapi output final tetap konsisten, tajam, dan selalu WebP |
+| Domain UI lama tetap berada di `components/admin` dan `components/product` | Menghindari refactor struktural besar yang belum memberi value langsung |
+| `features/` dipakai secara selektif untuk area baru atau provider domain tertentu | Arah arsitektur tetap feature-based, tetapi migrasi dilakukan bertahap |
+| Semua mutasi admin wajib dicek lagi lewat `auth()` di server action | Middleware saja tidak cukup untuk melindungi mutation endpoint |
 
 ---
 
-## 4. DECISIONS LOG
+## 4. Data Flow Aktual
 
-> Catat keputusan arsitektur penting di sini.
-> Format: Keputusan → Alasan → Alternatif yang dipertimbangkan.
-> Ini bukan changelog — hanya keputusan yang **MENGAPA**, bukan APA.
->
-> **AI RULE:** Jangan suggest perubahan yang bertentangan dengan keputusan di tabel ini tanpa konfirmasi eksplisit.
+### Read Path
 
-| Keputusan     | Alasan        | Alternatif Ditolak |
-| ------------- | ------------- | ------------------ |
-| `[CUSTOMIZE]` | `[CUSTOMIZE]` | `[CUSTOMIZE]`      |
-
----
-
-## 5. DATA FLOW
-
-> Gambarkan jalur data utama di aplikasi ini.
-> **AI RULE:** Gunakan pattern ini saat menentukan di mana logic harus ditaruh.
-
-### Read Path (user melihat data)
-
-```
-[CUSTOMIZE — contoh:]
-Server Component → service → query → DB → return ke component
+```txt
+Server Component / Page
+→ repository di services/database/*
+→ Supabase
+→ props ke component
 ```
 
-### Write Path (user mengubah data)
+### Write Path
 
-```
-[CUSTOMIZE — contoh:]
-Form submit → Server Action → schema validation → service → query → DB
+```txt
+Form submit
+→ Server Action (lib/actions.ts / lib/admin-actions.ts)
+→ Zod validation
+→ service layer
+→ repository / storage
+→ Supabase
 ```
 
 ### Auth Flow
 
+```txt
+/admin/login
+→ NextAuth Credentials
+→ cek AdminUser di Supabase
+→ session cookie
+→ middleware protect /admin/dashboard/*
+→ server action tetap verify session via auth()
 ```
-[CUSTOMIZE — contoh:]
-Login form → auth provider → set session/cookie → redirect
-```
-
-> Detail implementasi per layer: lihat `02-architecture-context.md` Section Pola Per Layer.
-> Detail security & auth: lihat `03-security-context.md`.
 
 ---
 
-## 6. STRUKTUR FOLDER & ARSITEKTUR AKTUAL
+## 5. Struktur Proyek Aktual
 
-> Update tree ini setiap kali ada perubahan struktur signifikan.
-> Untuk pattern dan aturan penempatan file: lihat `02-architecture-context.md`.
-
-```
+```txt
 app/
-├── (public)/              — Routes publik pelanggan
-│   ├── page.tsx           — Homepage / Storefront
-│   └── product/           — Detail produk
-├── admin/                 — Routes Admin (Protected)
-│   ├── login/             — NextAuth email/password login
-│   └── dashboard/         — Layout dashboard, butuh session
-│       ├── page.tsx       — Admin stats
-│       └── products/      — Manajemen CRUD produk + Image Upload
+├── (customer)/                 Public storefront, catalog, cart, checkout
+├── admin/                      Login + dashboard admin
+└── components-showcase/        Halaman showcase komponen
+
 components/
-├── ui/                    — Shadcn UI components (Dilarang reinvent the wheel)
-├── admin/                 — Client components untuk admin (mis. ProductsTable)
-└── shared/                — Komponen reusable antar public / admin
+├── ui/                         Primitive shadcn/ui
+├── layout/                     Navbar, footer, cart sheet, cookie consent
+├── admin/                      Domain UI admin yang sudah ada
+├── product/                    Domain UI storefront/catalog yang sudah ada
+└── providers/                  Query provider, dsb.
+
+context/
+└── cart-context.tsx            Global cart UI state
+
+features/
+└── products/ProductNavProvider.tsx
+
 lib/
-├── image-utils.ts         — Client-side image compression (browser-image-compression ke WebP)
-├── prisma.ts / db.ts      — Supabase client config (jika pakai Prisma/Drizzle/Supabase-js)
-└── type.ts                — Deklarasi global type (Product, AdminUser)
+├── actions.ts                  Public/server actions umum
+├── admin-actions.ts            Admin mutations
+├── image-utils.ts              Client-side image preprocess helper
+├── sharp-compress.ts           Final image normalization di server
+├── supabase.ts                 Public + admin Supabase clients
+└── errors.ts                   AppError
+
 services/
-├── product.service.ts     — Logika upload/database terkait produk
-└── storage.service.ts     — Abstraksi Supabase storage ('products/' bucket)
-scripts/
-├── seed-admin.ts          — Hashing password via bcryptjs ke Supabase
-└── seed-products.ts       — Migrasi bulk data product (CSV to Supabase)
-supabase/
-└── migrations/            — RLS policies, indexing, table schema
+├── database/                   DAL / repository Supabase
+├── product.service.ts          Business logic produk
+├── order.service.ts            Business logic order
+├── showcase.service.ts         Business logic showcase
+└── storage.service.ts          Upload/delete image di storage
 ```
 
----
+### Catatan
 
-## 7. SUPABASE ARCHITECTURE & STORAGE
-
-### Schema Inti (Postgres)
-
-- **Product**: `id`, `name`, `baseName`, `slug`, `sku`, `color`, `dimensions`, `description`, `price`, `stock`, `images` (array of text URL).
-- **AdminUser**: `id`, `email`, `passwordHash`.
-
-### Storage (Bucket: `products`)
-
-File disimpan dengan format terstruktur: `products/{baseName}/{baseName}-{color}-{number}.webp`
-Upload wajib di-compress ke WebP menggunakan `browser-image-compression` secara client-side sebelum dikirim ke Supabase dengan ukuran maksimal +- 150KB.
+- Ini adalah struktur aktual yang harus dihormati saat mengedit area yang sudah ada.
+- Jika membuat modul domain baru yang benar-benar terisolasi, `features/{domain}` tetap preferred.
+- Jangan melakukan pemindahan file lintas folder hanya demi “rapi” jika tidak dibutuhkan oleh task.
 
 ---
 
-## 8. DESIGN SYSTEM
+## 6. Storage & Image Pipeline
 
-> Definisikan tokens utama di `globals.css` sebagai CSS custom properties.
-> Detail lengkap styling conventions: lihat `02-architecture-context.md` Section Tailwind Conventions.
+### Product Images
 
-### Color Tokens
+- Bucket: `product-images`
+- Path: `products/{baseName}/{baseName}-{color}-{number}.webp`
+- Client-side: crop/resize/preprocess ringan untuk UX admin
+- Server-side: kompresi final dan normalisasi ke WebP memakai `sharp`
+- Target output: kecil tetapi tetap tajam; angka operasional saat ini sekitar `~200KB`, tidak wajib kaku `150KB`
 
-| Token         | Value         | Usage         |
-| ------------- | ------------- | ------------- |
-| `[CUSTOMIZE]` | `[CUSTOMIZE]` | `[CUSTOMIZE]` |
+### Prinsip
 
-### Font Tokens
-
-| Tailwind Class | Font          | Usage                                          |
-| -------------- | ------------- | ---------------------------------------------- |
-| `[CUSTOMIZE]`  | `[CUSTOMIZE]` | `[CUSTOMIZE]` — heading / body / accent / mono |
-
----
-
-## 9. MASTER CODING CONVENTIONS (The "Murphy's Law" Protocol)
-
-_Sebagai AI, kamu berperan sebagai Principal Software Architect & Engineering Lead._
-
-### 1. Hostile Environment Assumption
-
-- **The Potato Device:** Asumsikan user memakai HP lambat (Cegah memory leak, jangan block main-thread).
-- **The Flaky Network:** Asumsikan inet putus-nyambung (Selalu pasang error handling & disable tombol).
-- **The Hyperactive User:** Asumsikan user spam klik (Cegah race conditions).
-
-### 2. Aturan Dasar (Selalu Berlaku)
-
-1. **TypeScript Strict** — Tidak ada `any`. Gunakan `unknown` atau define type dengan benar.
-2. **Tailwind v4** — **DILARANG** menggunakan `tailwind.config.js`. Gunakan `app/globals.css` dengan arahan `@theme`.
-3. **No File System Storage** — Vercel = ephemeral. DILARANG pakai `fs.writeFileSync` ke public/. SELALU gunakan Supabase Storage.
-4. **No Raw Mock Data di Prod** — Jangan hardcode mock array di server component akhir.
-5. **URL State First** — Untuk paginasi/search filter kompleks, WAJIB gunakan `nuqs`. JANGAN pakai standard `useSearchParams` jika state kompleks.
-
-### 3. Error Handling & Safety
-
-1. **Trust No One:** Validasi input, Payload data, Params secara Runtime pakai **Zod**.
-2. **AppError:** Gunakan custom class `AppError(message, statusCode, code)` daripada throw string asal.
-3. **No Silent Failures:** Dilarang pakai `try { ... } catch (e) { console.log(e) }` di client tanpa memberitahu user (Toast/Inline UI error wajib hadir).
-4. **Server Actions:** Tangkap error di dalam server action dan return `{ error: string }` ke React hook (`useActionState` / `useTransition`).
+- Fokus pada kualitas visual katalog premium.
+- Upload input boleh lebih besar, tetapi hasil final harus konsisten.
+- Service role key hanya dipakai di server.
 
 ---
 
-## 10. ENVIRONMENT & DEPLOYMENT
+## 7. Error Handling Rules
 
-### Environment Variables
-
-> **AI RULE:** Jangan hardcode value. Jangan invent env var baru tanpa menambahkannya di sini dan di `.env.example`.
-
-| Variable      | Scope           | Deskripsi     |
-| ------------- | --------------- | ------------- |
-| `[CUSTOMIZE]` | server / client | `[CUSTOMIZE]` |
-
-> **Konvensi:**
->
-> - Client-accessible: prefix `NEXT_PUBLIC_`
-> - Server-only: tanpa prefix — JANGAN expose ke client
-> - Semua env var harus terdaftar di tabel ini dan di `.env.example`
-
-### Deployment
-
-| Key                     | Value               |
-| ----------------------- | ------------------- |
-| **Platform**            | Vercel              |
-| **Branch strategy**     | `main` = production |
-| **Build command**       | `npm run build`     |
-| **Preview URL pattern** | `[CUSTOMIZE]`       |
-
-> Detail CI/CD pipeline: lihat `08-devops-context.md`.
+- Gunakan `AppError(message, statusCode, code)` untuk service/repository error.
+- Server action harus menangkap error internal dan mengembalikan payload ringkas ke UI.
+- Jangan menampilkan detail Supabase/Postgres ke user.
+- Client UI tidak boleh gagal diam-diam; tampilkan inline error atau state yang jelas.
 
 ---
 
-## 11. STRUKTUR CONTEXT FILES
+## 8. Environment Variables
 
-> **AI RULE:** Ketika kamu menemukan topik yang overlap dengan context file lain,
-> sebutkan file mana yang harus dibaca untuk detail lengkap.
-> Jangan assume informasi di satu file sudah cukup jika tabel di bawah menunjukkan
-> ada file lain yang lebih spesifik untuk topik tersebut.
+Semua env var harus tercantum di `.env.example`.
 
-| File                         | Scope                                     | Baca Saat                       |
-| ---------------------------- | ----------------------------------------- | ------------------------------- |
-| `00-master-context.md`       | Overview, data flow, identity             | Selalu, di awal — **wajib**     |
-| `01-product-context.md`      | Halaman, fitur, content structure         | Saat tambah halaman/fitur baru  |
-| `02-architecture-context.md` | Folder structure, pola kode, import rules | Saat buat/edit file apapun      |
-| `03-security-context.md`     | Auth, authorization, data protection      | Saat edit auth/middleware/role  |
-| `04-sre-perf-context.md`     | Caching, performance, monitoring          | Saat optimasi performa          |
-| `05-testing-qa-context.md`   | Test strategy, coverage, CI               | Saat menulis/review test        |
-| `06-seo-tech-context.md`     | Metadata, sitemap, structured data        | Saat edit metadata/SEO          |
-| `07-content-context.md`      | Copywriting, tone, voice                  | Saat tulis/edit copy UI         |
-| `08-devops-context.md`       | CI/CD, env management, deployment         | Saat deploy atau setup pipeline |
+| Variable | Scope | Kegunaan |
+| --- | --- | --- |
+| `AUTH_SECRET` | server | Secret NextAuth |
+| `NEXT_PUBLIC_APP_URL` | client/server | Base URL untuk metadata dan URL absolut |
+| `NEXT_PUBLIC_SUPABASE_URL` | client/server | URL project Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | client/server | Public anon key Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | server | Admin/storage/repository mutator |
 
 ---
 
-## 12. INSTRUCTION FOR AI RESPONSE (The Workflow)
+## 9. Current Implementation Guidance
 
-Saat diminta tambahan fitur/solusi:
+- Untuk admin mutations, edit `lib/admin-actions.ts`.
+- Untuk public order/auth actions, edit `lib/actions.ts`.
+- Untuk query ke database, mulai dari `services/database/*`.
+- Untuk business logic, taruh di `services/*.service.ts`.
+- Untuk UI storefront lama, lanjutkan pola di `components/product/*`.
+- Untuk UI admin lama, lanjutkan pola di `components/admin/*`.
 
-1. **Analyze:** Cek `00-master-context.md` (file ini) untuk batas tumpukan teknologi dan struktur. Pahami juga context files lain yang sesuai scope jika diperlukan.
-2. **Plan:** (Internal thought) Pikirkan integrasi design adaptive & logic yang efisien. Ikuti data flow dari section "DATA FLOW" di `00-master-context.md`.
-3. **Execute:** Berikan **KODE LENGKAP**.
-   - ⚠️ DILARANG MENGGUNAKAN `// ... rest of the code`.
-   - ⚠️ DILARANG memberi basa-basi seperti "Here is the code" atau resume setelah kode selesai. Cukup berikan file path dan block kode!
-4. **Definition of Done (DoD):** Kode tanpa bug TS, styling sesuai komponen (Shadcn/UI), logic ter-handle, environment termanage, aman, testable.
+---
 
-### Setup prompt yang efektif:
+## 10. Context Map
 
-```
-Baca 00-master-context.md.
-[Tambahkan context file yang relevan — lihat tabel di Section 11]
-[Tambahkan konteks/file yang akan diubah]
-Tugas: Buatkan komponen X dengan spesifikasi Y.
-```
+| File | Status | Kegunaan |
+| --- | --- | --- |
+| `00-master-context.md` | aktual | Source of truth proyek |
+| `01-product-context.md` | referensi domain | Produk, halaman, dan kebutuhan bisnis |
+| `02-architecture-context.md` | aktual | Struktur dan placement rules yang benar untuk repo ini |
+| `03-security-context.md` | aktual | Auth, secrets, dan security rules yang berlaku |
+| `05-testing-qa-context-template.md` | template referensi | Dipakai saat perlu menyusun strategi QA |
+| `06-seo-tech-context.md` | referensi implementasi | Metadata, sitemap, structured data |
+| `07-content-context-template.md` | template referensi | Tone, content workflow |
+| `08-devops-context-template.md` | template referensi | CI/CD dan deployment checklist |
+| `09-pre-launch-checklist-prompt.md` | checklist referensi | Final QA sebelum launch |
 
-Konteks ini memastikan UI/UX premium namun codebase tetap bersih, tiped secara ketat, dan siap production.
+---
+
+## 11. Working Rule for AI / Contributor
+
+1. Cek file ini lebih dulu.
+2. Jika task menyentuh struktur kode, baca `02-architecture-context.md`.
+3. Jika task menyentuh auth, env, action, atau data sensitif, baca `03-security-context.md`.
+4. Jika template referensi bertentangan dengan implementasi aktual, ikuti implementasi aktual atau usulkan perubahan hanya jika ada alasan engineering yang kuat.
