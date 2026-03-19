@@ -22,7 +22,6 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isNavHidden, setIsNavHidden] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const lastScrollY = useRef(0);
   const headerRef = useRef<HTMLElement>(null);
   const router = useRouter();
@@ -65,7 +64,6 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    setMounted(true);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -104,6 +102,26 @@ export default function Navbar() {
   };
 
   const showProductBar = isInRecommendationSection && !!productInfo;
+  const closeMobileSearch = useCallback(() => {
+    setIsSearchOpen(false);
+    setSearchQuery("");
+  }, []);
+
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
+
+  const toggleMobileSearch = useCallback(() => {
+    setIsMobileMenuOpen(false);
+    setIsSearchOpen((prev) => !prev);
+  }, []);
+
+  const openCart = useCallback(() => {
+    setIsMobileMenuOpen(false);
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    setIsCartOpen(true);
+  }, [setIsCartOpen]);
 
   // Category nav element
   const categoryNavElement = (
@@ -126,7 +144,7 @@ export default function Navbar() {
     <>
       {/* Product Reminder Bar — fixed at top, visible in recommendation section when nav is hidden */}
       <div
-        className={`fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/98 backdrop-blur transition-all duration-300 overflow-hidden ${
+        className={`fixed top-0 left-0 right-0 z-[var(--z-sticky-cta)] border-b border-border bg-background/98 backdrop-blur transition-all duration-300 overflow-hidden ${
           showProductBar && isNavHidden ? "max-h-20 opacity-100" : "max-h-0 opacity-0 border-b-0"
         }`}
       >
@@ -170,7 +188,7 @@ export default function Navbar() {
       {/* Main Navbar — hides on scroll down */}
       <header
         ref={headerRef}
-        className={`sticky top-0 z-50 w-full transition-transform duration-300 ease-in-out ${
+        className={`sticky top-0 z-[var(--z-navbar)] w-full transition-transform duration-300 ease-in-out ${
           isNavHidden ? "-translate-y-full" : "translate-y-0"
         }`}
       >
@@ -178,61 +196,82 @@ export default function Navbar() {
           <div className="container grid grid-cols-3 h-20 items-center">
             {/* Mobile Menu & Search (Left) */}
             <div className="flex items-center gap-4 md:hidden">
-              {mounted && (
-                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="-ml-2">
-                      <Menu className="h-5 w-5" strokeWidth={1.5} />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
-                    <SheetHeader className="p-6 border-b border-border text-left">
-                      <SheetTitle className="text-xl font-bold tracking-[0.15em] uppercase text-[#111111]">MOEMA</SheetTitle>
-                    </SheetHeader>
-                    <div className="flex flex-col">
-                      {/* Home link */}
-                      <Link
-                        href="/"
-                        className="px-6 py-4 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/50"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Beranda
-                      </Link>
+              <Sheet
+                open={isMobileMenuOpen}
+                onOpenChange={(open) => {
+                  setIsMobileMenuOpen(open);
+                  if (open) {
+                    closeMobileSearch();
+                  }
+                }}
+              >
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="-ml-2"
+                    aria-label={isMobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
+                    onClick={() => {
+                      if (isSearchOpen) {
+                        closeMobileSearch();
+                      }
+                    }}
+                  >
+                    <Menu className="h-5 w-5" strokeWidth={1.5} />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
+                  <SheetHeader className="p-6 border-b border-border text-left">
+                    <SheetTitle className="text-xl font-bold tracking-[0.15em] uppercase text-[#111111]">MOEMA</SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col">
+                    {/* Home link */}
+                    <Link
+                      href="/"
+                      className="px-6 py-4 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/50"
+                      onClick={closeMobileMenu}
+                    >
+                      Beranda
+                    </Link>
 
-                      {/* Collapsible Categories */}
-                      <details className="group" open>
-                        <summary className="px-6 py-4 text-sm font-medium uppercase tracking-wide cursor-pointer select-none hover:bg-muted transition-colors border-b border-border/50 flex items-center justify-between list-none [&::-webkit-details-marker]:hidden">
-                          Kategori
-                          <ChevronUp className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
-                        </summary>
-                        <div className="flex flex-col bg-muted/20">
-                          {navItems.map((item) => (
-                            <Link
-                              key={item}
-                              href={`/catalog?category=${item.toLowerCase().replace(" ", "-")}`}
-                              className="px-8 py-3.5 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/30 last:border-0"
-                              onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                              {item}
-                            </Link>
-                          ))}
-                        </div>
-                      </details>
+                    {/* Collapsible Categories */}
+                    <details className="group" open>
+                      <summary className="px-6 py-4 text-sm font-medium uppercase tracking-wide cursor-pointer select-none hover:bg-muted transition-colors border-b border-border/50 flex items-center justify-between list-none [&::-webkit-details-marker]:hidden">
+                        Kategori
+                        <ChevronUp className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
+                      </summary>
+                      <div className="flex flex-col bg-muted/20">
+                        {navItems.map((item) => (
+                          <Link
+                            key={item}
+                            href={`/catalog?category=${item.toLowerCase().replace(" ", "-")}`}
+                            className="px-8 py-3.5 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/30 last:border-0"
+                            onClick={closeMobileMenu}
+                          >
+                            {item}
+                          </Link>
+                        ))}
+                      </div>
+                    </details>
 
-                      {/* All Products */}
-                      <Link
-                        href="/catalog"
-                        className="px-6 py-4 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/50"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Semua Produk
-                      </Link>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              )}
+                    {/* All Products */}
+                    <Link
+                      href="/catalog"
+                      className="px-6 py-4 text-sm font-medium uppercase tracking-wide hover:bg-muted transition-colors border-b border-border/50"
+                      onClick={closeMobileMenu}
+                    >
+                      Semua Produk
+                    </Link>
+                  </div>
+                </SheetContent>
+              </Sheet>
 
-              <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(!isSearchOpen)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={isSearchOpen ? "Close mobile search" : "Open mobile search"}
+                onClick={toggleMobileSearch}
+              >
                 <Search className="h-5 w-5" strokeWidth={1.5} />
               </Button>
             </div>
@@ -249,7 +288,7 @@ export default function Navbar() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="bg-transparent border-b border-primary text-xs uppercase tracking-widest focus:outline-none w-48 py-1"
                   />
-                  <Button type="button" variant="ghost" size="icon" onClick={() => setIsSearchOpen(false)}>
+                  <Button type="button" variant="ghost" size="icon" aria-label="Close desktop search" onClick={() => setIsSearchOpen(false)}>
                     <X className="h-4 w-4" strokeWidth={1.5} />
                   </Button>
                 </form>
@@ -273,7 +312,7 @@ export default function Navbar() {
 
             {/* User Actions (Right) */}
             <div className="flex items-center gap-2 justify-end">
-              <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)}>
+              <Button variant="ghost" size="icon" className="relative" aria-label="Open shopping bag" onClick={openCart}>
                 <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
                 {cartCount > 0 && (
                   <span className="absolute top-1 right-1 flex h-3 w-3 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">
@@ -286,7 +325,7 @@ export default function Navbar() {
 
           {/* Mobile Search Input */}
           {isMobileMenuOpen === false && isSearchOpen && (
-            <div className="md:hidden border-t border-border bg-background p-4 animate-in slide-in-from-top duration-300">
+            <div className="md:hidden border-t border-border bg-background p-4 animate-in slide-in-from-top duration-300 z-[var(--z-mobile-search)] relative">
               <form onSubmit={handleSearch} className="flex items-center gap-2">
                 <Search className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                 <input
@@ -297,7 +336,7 @@ export default function Navbar() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 bg-transparent text-xs uppercase tracking-widest focus:outline-none"
                 />
-                <Button type="button" variant="ghost" size="icon" onClick={() => setIsSearchOpen(false)}>
+                <Button type="button" variant="ghost" size="icon" aria-label="Close mobile search" onClick={closeMobileSearch}>
                   <X className="h-4 w-4" strokeWidth={1.5} />
                 </Button>
               </form>

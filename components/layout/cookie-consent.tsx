@@ -1,18 +1,49 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 
 export function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const isAdminRoute = pathname.startsWith("/admin");
 
   useEffect(() => {
+    if (isAdminRoute) return;
+
     const consent = localStorage.getItem("moema_cookie_consent");
     if (!consent) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowBanner(true);
     }
-  }, []);
+  }, [isAdminRoute]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (!showBanner || isAdminRoute || !bannerRef.current) {
+      root.style.setProperty("--mobile-consent-offset", "0px");
+      return;
+    }
+
+    const updateOffset = () => {
+      const height = bannerRef.current?.offsetHeight ?? 0;
+      root.style.setProperty("--mobile-consent-offset", `${height}px`);
+    };
+
+    updateOffset();
+
+    const resizeObserver = new ResizeObserver(() => updateOffset());
+    resizeObserver.observe(bannerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+      root.style.setProperty("--mobile-consent-offset", "0px");
+    };
+  }, [showBanner, isAdminRoute]);
 
   const handleAccept = () => {
     localStorage.setItem("moema_cookie_consent", "accepted");
@@ -24,13 +55,17 @@ export function CookieConsent() {
     setShowBanner(false);
   };
 
-  if (!showBanner) return null;
+  if (!showBanner || isAdminRoute) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-primary text-white border-t border-white/10 shadow-2xl animate-in slide-in-from-bottom duration-500">
-      <div className="container max-w-7xl mx-auto px-6 py-6 md:py-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
-          <div className="flex-1 text-center md:text-left">
+    <div
+      ref={bannerRef}
+      className="fixed inset-x-0 bottom-0 z-[var(--z-cookie-consent)] animate-in slide-in-from-bottom duration-500 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] md:px-0 md:pb-0"
+    >
+      <div className="mx-auto max-w-7xl rounded-2xl border border-white/10 bg-primary text-white shadow-2xl md:rounded-none md:border-x-0 md:border-b-0 md:border-t">
+        <div className="container max-w-7xl mx-auto px-6 py-5 md:py-4">
+          <div className="flex flex-col items-start gap-5 pr-10 md:flex-row md:items-center md:justify-between md:gap-8 md:pr-0">
+            <div className="flex-1 text-left">
             <p className="text-xs md:text-sm font-sans tracking-wide leading-relaxed opacity-90">
               We use essential cookies to ensure our website works properly and to provide you with the best shopping experience. 
               {" "}
@@ -43,7 +78,7 @@ export function CookieConsent() {
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="flex w-full flex-col items-stretch gap-3 sm:flex-row sm:items-center md:w-auto">
             <button
               onClick={handleAccept}
               className="w-full sm:w-auto px-10 py-3 bg-moema-dark text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-moema-dark/90 active:scale-95"
@@ -57,13 +92,14 @@ export function CookieConsent() {
               Decline
             </button>
           </div>
+          </div>
         </div>
       </div>
       
       {/* Optional close button for a cleaner dismissal if they don't want to choose */}
       <button 
         onClick={() => setShowBanner(false)}
-        className="absolute top-4 right-4 md:top-1/2 md:-translate-y-1/2 md:right-6 opacity-40 hover:opacity-100 transition-opacity"
+        className="absolute right-7 top-4 opacity-40 transition-opacity hover:opacity-100 md:right-6 md:top-1/2 md:-translate-y-1/2"
         aria-label="Close"
       >
         <X className="w-4 h-4" />

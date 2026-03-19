@@ -82,6 +82,14 @@
   --sidebar-accent-foreground: hsl(240 5.9% 10%);
   --sidebar-border: hsl(220 13% 91%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --mobile-consent-offset: 0px;
+  --z-cookie-consent: 30;
+  --z-sticky-cta: 40;
+  --z-navbar: 50;
+  --z-mobile-search: 55;
+  --z-sheet-overlay: 60;
+  --z-sheet-content: 70;
+  --z-fullscreen: 80;
 }
 
 /* Utility Classes */

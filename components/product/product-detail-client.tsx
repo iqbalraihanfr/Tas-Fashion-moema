@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -102,7 +102,7 @@ export function ProductDetailClient({ product, recommendedProducts, colorVariant
       {/* Fullscreen Overlay */}
       {isFullscreen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 md:p-12 cursor-zoom-out"
+          className="fixed inset-0 z-[var(--z-fullscreen)] bg-black/95 flex items-center justify-center p-4 md:p-12 cursor-zoom-out"
           onClick={() => setIsFullscreen(false)}
         >
           <button 
@@ -203,7 +203,7 @@ export function ProductDetailClient({ product, recommendedProducts, colorVariant
           )}
 
           {/* Action Buttons */}
-          <div className="space-y-3 pt-4">
+          <div className="space-y-3 pt-4" data-main-product-actions>
             <Button size="lg" className="w-full h-12 uppercase tracking-widest text-xs rounded-none" onClick={handleAddToBag} ref={mainCtaRef}>
                 Add to Bag
             </Button>
@@ -304,10 +304,14 @@ export function ProductDetailClient({ product, recommendedProducts, colorVariant
 
       {/* Mobile Sticky "Add to Bag" Bottom Bar */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-40 bg-background/98 backdrop-blur border-t border-border lg:hidden transition-transform duration-300 ${
+        data-mobile-sticky-bar
+        className={`fixed left-0 right-0 z-[var(--z-sticky-cta)] bg-background/98 backdrop-blur border-t border-border lg:hidden transition-transform duration-300 ${
           isMainCtaHidden && !isInRecommendationSection ? "translate-y-0" : "translate-y-full"
         }`}
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        style={{
+          bottom: "var(--mobile-consent-offset, 0px)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}
       >
         <div className="container flex items-center justify-between py-3 gap-4">
           <div className="min-w-0">
@@ -317,6 +321,7 @@ export function ProductDetailClient({ product, recommendedProducts, colorVariant
           <Button
             size="sm"
             className="h-10 px-6 uppercase tracking-widest text-[10px] rounded-none shrink-0"
+            aria-label="Add to bag from sticky bar"
             onClick={handleAddToBag}
           >
             Add to Bag
