@@ -23,7 +23,7 @@ export default function ProductCard({ group, colorMap }: ProductCardProps) {
   const hoverImageUrl = activeVariant.images?.[1] ?? imageUrl;
 
   return (
-    <div className="group flex flex-col h-full">
+    <div data-product-card className="group flex flex-col h-full">
       <Link href={`/product/${activeVariant.slug}`} className="block">
         <div className="relative aspect-4/5 w-full overflow-hidden bg-[#f5f5f5]">
           {/* Main Image */}

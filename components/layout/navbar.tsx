@@ -12,6 +12,7 @@ import { useDebounce } from "@/lib/hooks/use-debounce";
 import { useProductNav } from "@/features/products/ProductNavProvider";
 
 const SCROLL_THRESHOLD = 30;
+type SearchMode = "closed" | "mobile" | "desktop";
 
 const navItems = ["New Arrivals", "Totes", "Shoulder Bags", "Crossbody", "Mini Bags", "Clutches", "Backpacks", "Sale"];
 
@@ -19,7 +20,7 @@ export default function Navbar() {
   const { cartCount, setIsCartOpen, addItem } = useCart();
   const { productInfo, isInRecommendationSection } = useProductNav();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchMode, setSearchMode] = useState<SearchMode>("closed");
   const [searchQuery, setSearchQuery] = useState("");
   const [isNavHidden, setIsNavHidden] = useState(false);
   const lastScrollY = useRef(0);
@@ -85,25 +86,25 @@ export default function Navbar() {
   }, [isNavHidden, isCatalogPage]);
 
   useEffect(() => {
-    if (debouncedSearch.trim() && isSearchOpen && !hasSubmitted.current) {
+    if (debouncedSearch.trim() && searchMode === "desktop" && !hasSubmitted.current) {
       router.push(`/catalog?search=${encodeURIComponent(debouncedSearch.trim())}`);
     }
     hasSubmitted.current = false;
-  }, [debouncedSearch, isSearchOpen, router]);
+  }, [debouncedSearch, searchMode, router]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       hasSubmitted.current = true;
       router.push(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchOpen(false);
+      setSearchMode("closed");
       setSearchQuery("");
     }
   };
 
   const showProductBar = isInRecommendationSection && !!productInfo;
-  const closeMobileSearch = useCallback(() => {
-    setIsSearchOpen(false);
+  const closeSearch = useCallback(() => {
+    setSearchMode("closed");
     setSearchQuery("");
   }, []);
 
@@ -111,17 +112,26 @@ export default function Navbar() {
     setIsMobileMenuOpen(false);
   }, []);
 
+  const openDesktopSearch = useCallback(() => {
+    setIsMobileMenuOpen(false);
+    setSearchMode("desktop");
+  }, []);
+
   const toggleMobileSearch = useCallback(() => {
     setIsMobileMenuOpen(false);
-    setIsSearchOpen((prev) => !prev);
+    setSearchMode((prev) => (prev === "mobile" ? "closed" : "mobile"));
   }, []);
 
   const openCart = useCallback(() => {
     setIsMobileMenuOpen(false);
-    setIsSearchOpen(false);
+    setSearchMode("closed");
     setSearchQuery("");
     setIsCartOpen(true);
   }, [setIsCartOpen]);
+
+  const isSearchOpen = searchMode !== "closed";
+  const isMobileSearchOpen = searchMode === "mobile";
+  const isDesktopSearchOpen = searchMode === "desktop";
 
   // Category nav element
   const categoryNavElement = (
@@ -201,7 +211,7 @@ export default function Navbar() {
                 onOpenChange={(open) => {
                   setIsMobileMenuOpen(open);
                   if (open) {
-                    closeMobileSearch();
+                    closeSearch();
                   }
                 }}
               >
@@ -213,7 +223,7 @@ export default function Navbar() {
                     aria-label={isMobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
                     onClick={() => {
                       if (isSearchOpen) {
-                        closeMobileSearch();
+                        closeSearch();
                       }
                     }}
                   >
@@ -269,7 +279,7 @@ export default function Navbar() {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label={isSearchOpen ? "Close mobile search" : "Open mobile search"}
+                aria-label={isMobileSearchOpen ? "Close mobile search" : "Open mobile search"}
                 onClick={toggleMobileSearch}
               >
                 <Search className="h-5 w-5" strokeWidth={1.5} />
@@ -278,23 +288,31 @@ export default function Navbar() {
 
             {/* Desktop Search (Left) */}
             <div className="hidden md:flex items-center">
-              {isSearchOpen ? (
-                <form onSubmit={handleSearch} className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
+              {isDesktopSearchOpen ? (
+                <form
+                  role="search"
+                  onSubmit={handleSearch}
+                  className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300"
+                >
                   <input
                     type="text"
                     placeholder="SEARCH..."
                     autoFocus
+                    inputMode="search"
+                    enterKeyHint="search"
+                    autoCapitalize="none"
+                    autoCorrect="off"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="bg-transparent border-b border-primary text-xs uppercase tracking-widest focus:outline-none w-48 py-1"
                   />
-                  <Button type="button" variant="ghost" size="icon" aria-label="Close desktop search" onClick={() => setIsSearchOpen(false)}>
+                  <Button type="button" variant="ghost" size="icon" aria-label="Close desktop search" onClick={closeSearch}>
                     <X className="h-4 w-4" strokeWidth={1.5} />
                   </Button>
                 </form>
               ) : (
                 <div className="flex items-center gap-6">
-                  <Button variant="ghost" size="sm" className="text-xs font-medium uppercase tracking-widest gap-2 hover:bg-transparent px-0" onClick={() => setIsSearchOpen(true)}>
+                  <Button variant="ghost" size="sm" className="text-xs font-medium uppercase tracking-widest gap-2 hover:bg-transparent px-0" onClick={openDesktopSearch}>
                     <Search className="h-4 w-4" strokeWidth={1.5} />
                     Search
                   </Button>
@@ -324,19 +342,23 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Search Input */}
-          {isMobileMenuOpen === false && isSearchOpen && (
-            <div className="md:hidden border-t border-border bg-background p-4 animate-in slide-in-from-top duration-300 z-[var(--z-mobile-search)] relative">
-              <form onSubmit={handleSearch} className="flex items-center gap-2">
+          {isMobileMenuOpen === false && isMobileSearchOpen && (
+            <div className="md:hidden border-t border-border bg-background p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] animate-in slide-in-from-top duration-300 z-[var(--z-mobile-search)] relative">
+              <form role="search" onSubmit={handleSearch} className="flex items-center gap-2">
                 <Search className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                 <input
                   type="text"
                   placeholder="SEARCH..."
                   autoFocus
+                  inputMode="search"
+                  enterKeyHint="search"
+                  autoCapitalize="none"
+                  autoCorrect="off"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 bg-transparent text-xs uppercase tracking-widest focus:outline-none"
                 />
-                <Button type="button" variant="ghost" size="icon" aria-label="Close mobile search" onClick={closeMobileSearch}>
+                <Button type="button" variant="ghost" size="icon" aria-label="Close mobile search" onClick={closeSearch}>
                   <X className="h-4 w-4" strokeWidth={1.5} />
                 </Button>
               </form>

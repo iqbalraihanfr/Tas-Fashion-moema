@@ -41,11 +41,5 @@ export default async function CatalogPage({
   const productGroups = groupProductsByBaseName(products);
   const colorMap = colorsToMap(colors);
 
-  const title = search
-    ? `Hasil untuk "${search}"`
-    : category
-      ? category.charAt(0).toUpperCase() + category.slice(1)
-      : "Semua Koleksi";
-
-  return <CatalogContent productGroups={productGroups} title={title} colorMap={colorMap} />;
+  return <CatalogContent productGroups={productGroups} colorMap={colorMap} />;
 }

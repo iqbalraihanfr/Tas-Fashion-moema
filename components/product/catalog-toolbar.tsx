@@ -8,8 +8,10 @@ const filterOptions = { shallow: false } as const;
 
 interface CatalogToolbarProps {
   totalProducts: number;
-  columns: number;
-  onColumnsChange: (cols: number) => void;
+  mobileColumns: 2 | 3;
+  desktopColumns: 3 | 4 | 6;
+  onMobileColumnsChange: (cols: 2 | 3) => void;
+  onDesktopColumnsChange: (cols: 3 | 4 | 6) => void;
   isFilterOpen: boolean;
   onFilterToggle: () => void;
 }
@@ -22,8 +24,10 @@ const SORT_OPTIONS = [
 
 export function CatalogToolbar({
   totalProducts,
-  columns,
-  onColumnsChange,
+  mobileColumns,
+  desktopColumns,
+  onMobileColumnsChange,
+  onDesktopColumnsChange,
   isFilterOpen,
   onFilterToggle,
 }: CatalogToolbarProps) {
@@ -114,22 +118,43 @@ export function CatalogToolbar({
 
         {/* Right: Column selector */}
         <div className="flex items-center gap-1">
-          <span className="text-[11px] uppercase tracking-widest text-muted-foreground mr-2 hidden sm:inline">
+          <span className="text-[11px] uppercase tracking-widest text-muted-foreground mr-2 hidden md:inline">
             Lihat Berdasarkan:
           </span>
-          {[3, 4, 6].map((col) => (
-            <button
-              key={col}
-              onClick={() => onColumnsChange(col)}
-              className={`w-9 h-9 flex items-center justify-center text-[11px] font-bold transition-colors ${
-                columns === col
-                  ? "text-foreground border border-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {col}
-            </button>
-          ))}
+          <div className="flex items-center gap-1 md:hidden">
+            {[2, 3].map((col) => (
+              <button
+                key={`mobile-${col}`}
+                type="button"
+                aria-label={`${col} columns on mobile`}
+                onClick={() => onMobileColumnsChange(col as 2 | 3)}
+                className={`w-9 h-9 flex items-center justify-center text-[11px] font-bold transition-colors ${
+                  mobileColumns === col
+                    ? "text-foreground border border-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {col}
+              </button>
+            ))}
+          </div>
+          <div className="hidden md:flex items-center gap-1">
+            {[3, 4, 6].map((col) => (
+              <button
+                key={`desktop-${col}`}
+                type="button"
+                aria-label={`${col} columns on desktop`}
+                onClick={() => onDesktopColumnsChange(col as 3 | 4 | 6)}
+                className={`w-9 h-9 flex items-center justify-center text-[11px] font-bold transition-colors ${
+                  desktopColumns === col
+                    ? "text-foreground border border-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {col}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

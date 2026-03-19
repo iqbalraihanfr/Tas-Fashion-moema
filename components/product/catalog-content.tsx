@@ -13,20 +13,26 @@ const NAV_ITEMS = ["New Arrivals", "Totes", "Shoulder Bags", "Crossbody", "Mini 
 
 interface CatalogContentProps {
   productGroups: ProductGroup[];
-  title: string;
   colorMap?: Record<string, string>;
 }
 
-export function CatalogContent({ productGroups, title, colorMap }: CatalogContentProps) {
-  const [columns, setColumns] = useState(4);
+export function CatalogContent({ productGroups, colorMap }: CatalogContentProps) {
+  const [mobileColumns, setMobileColumns] = useState(2);
+  const [desktopColumns, setDesktopColumns] = useState(4);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const gridClass =
-    columns === 3
-      ? "grid-cols-2 lg:grid-cols-3"
-      : columns === 6
-        ? "grid-cols-3 lg:grid-cols-6"
-        : "grid-cols-2 lg:grid-cols-4";
+    mobileColumns === 3
+      ? desktopColumns === 3
+        ? "grid-cols-3 lg:grid-cols-3"
+        : desktopColumns === 6
+          ? "grid-cols-3 lg:grid-cols-6"
+          : "grid-cols-3 lg:grid-cols-4"
+      : desktopColumns === 3
+        ? "grid-cols-2 lg:grid-cols-3"
+        : desktopColumns === 6
+          ? "grid-cols-2 lg:grid-cols-6"
+          : "grid-cols-2 lg:grid-cols-4";
 
   return (
     <div>
@@ -53,8 +59,10 @@ export function CatalogContent({ productGroups, title, colorMap }: CatalogConten
         {/* Toolbar: Filter toggle, Sort, Count, Column selector */}
         <CatalogToolbar
           totalProducts={productGroups.length}
-          columns={columns}
-          onColumnsChange={setColumns}
+          mobileColumns={mobileColumns}
+          desktopColumns={desktopColumns}
+          onMobileColumnsChange={setMobileColumns}
+          onDesktopColumnsChange={setDesktopColumns}
           isFilterOpen={isFilterOpen}
           onFilterToggle={() => setIsFilterOpen(!isFilterOpen)}
         />
@@ -98,7 +106,7 @@ export function CatalogContent({ productGroups, title, colorMap }: CatalogConten
               </Button>
             </div>
           ) : (
-            <div className={`grid ${gridClass} gap-x-4 gap-y-10`}>
+            <div data-catalog-grid className={`grid ${gridClass} gap-x-4 gap-y-10`}>
               {productGroups.map((group) => (
                 <ProductCard key={group.baseName} group={group} colorMap={colorMap} />
               ))}

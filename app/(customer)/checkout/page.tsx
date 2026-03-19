@@ -42,7 +42,7 @@ export default function CheckoutPage() {
   }
 
   // Reusable order summary items
-  const OrderSummaryItems = () => (
+  const renderOrderSummaryItems = () => (
     <>
       <div className="space-y-6 mb-8">
         {cartItems.map((item) => (
@@ -77,7 +77,7 @@ export default function CheckoutPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
         {/* Minimal Header for Checkout */}
         <div className="border-b border-border py-4 flex justify-center items-center">
             <Link href="/">
@@ -94,7 +94,7 @@ export default function CheckoutPage() {
 
         <div className="container max-w-6xl grid lg:grid-cols-2 gap-0 lg:min-h-[calc(100vh-60px)]">
             {/* LEFT: Form Section */}
-            <div className="py-10 lg:pr-16 lg:border-r border-border">
+            <div className="py-10 pb-36 lg:pb-10 lg:pr-16 lg:border-r border-border">
                 {/* Mobile Order Summary — collapsible, semantic HTML */}
                 <details className="lg:hidden mb-10 border border-border" id="mobile-order-summary">
                   <summary className="flex items-center justify-between px-5 py-4 cursor-pointer select-none bg-muted/20">
@@ -102,11 +102,11 @@ export default function CheckoutPage() {
                     <span className="text-sm font-medium">Rp {subtotal.toLocaleString("id-ID")}</span>
                   </summary>
                   <div className="px-5 py-6">
-                    <OrderSummaryItems />
+                    {renderOrderSummaryItems()}
                   </div>
                 </details>
 
-                <form className="max-w-lg mx-auto lg:mx-0 space-y-10" onSubmit={handleSubmit}>
+                <form id="checkout-form" className="max-w-lg mx-auto lg:mx-0 space-y-10" onSubmit={handleSubmit}>
                     
                     {/* Contact */}
                     <section>
@@ -116,7 +116,7 @@ export default function CheckoutPage() {
                         <div className="space-y-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email Address</Label>
-                                <Input id="email" name="email" type="email" placeholder="you@example.com" required autoComplete="email" />
+                                <Input id="email" name="email" type="email" placeholder="you@example.com" required autoComplete="email" inputMode="email" enterKeyHint="next" autoCapitalize="none" autoCorrect="off" />
                             </div>
                         </div>
                     </section>
@@ -128,29 +128,29 @@ export default function CheckoutPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="firstName">First Name</Label>
-                                    <Input id="firstName" name="firstName" required autoComplete="given-name" />
+                                    <Input id="firstName" name="firstName" required autoComplete="given-name" enterKeyHint="next" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="lastName">Last Name</Label>
-                                    <Input id="lastName" name="lastName" required autoComplete="family-name" />
+                                    <Input id="lastName" name="lastName" required autoComplete="family-name" enterKeyHint="next" />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="address">Address</Label>
-                                <Input id="address" name="address" placeholder="Street, House No." required autoComplete="street-address" />
+                                <Input id="address" name="address" placeholder="Street, House No." required autoComplete="street-address" enterKeyHint="next" />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="city">City</Label>
-                                <Input id="city" name="city" required autoComplete="address-level2" />
+                                <Input id="city" name="city" required autoComplete="address-level2" enterKeyHint="next" />
                             </div>
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="postalCode">Postal Code</Label>
-                                    <Input id="postalCode" name="postalCode" required autoComplete="postal-code" />
+                                    <Input id="postalCode" name="postalCode" required autoComplete="postal-code" inputMode="numeric" enterKeyHint="next" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone</Label>
-                                    <Input id="phone" name="phone" type="tel" placeholder="+628123..." required autoComplete="tel" />
+                                    <Input id="phone" name="phone" type="tel" placeholder="+628123..." required autoComplete="tel" inputMode="tel" enterKeyHint="send" />
                                 </div>
                             </div>
                          </div>
@@ -167,7 +167,7 @@ export default function CheckoutPage() {
 
                     <Button
                       size="lg"
-                      className="w-full h-14 uppercase tracking-widest text-xs rounded-none"
+                      className="hidden lg:inline-flex w-full h-14 uppercase tracking-widest text-xs rounded-none"
                       type="submit"
                       disabled={isSubmitting}
                     >
@@ -180,9 +180,31 @@ export default function CheckoutPage() {
             <div className="hidden lg:block bg-muted/20 py-10 pl-16">
                  <div className="max-w-md">
                     <h2 className="text-sm font-medium uppercase tracking-widest mb-8">Order Summary</h2>
-                    <OrderSummaryItems />
+                    {renderOrderSummaryItems()}
                  </div>
             </div>
+        </div>
+
+        <div
+          data-mobile-checkout-footer
+          className="fixed inset-x-0 bottom-[var(--mobile-consent-offset,0px)] z-[var(--z-sticky-cta)] border-t border-border bg-background/98 px-4 py-3 backdrop-blur lg:hidden"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <div className="container flex items-center gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total</p>
+              <p className="text-sm font-medium">Rp {subtotal.toLocaleString("id-ID")}</p>
+            </div>
+            <Button
+              size="lg"
+              className="h-12 min-w-[12rem] uppercase tracking-widest text-xs rounded-none"
+              type="submit"
+              form="checkout-form"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Processing..." : "Order via WhatsApp"}
+            </Button>
+          </div>
         </div>
     </div>
   );

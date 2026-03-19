@@ -59,4 +59,20 @@ test.describe("Cart Regression", () => {
     await expect(reloadedCartPage.getByLabel(/remove /i).first()).toBeVisible();
     await expect(reloadedCartPage.getByRole("heading", { name: /^shopping bag$/i })).toBeVisible();
   });
+
+  test("mobile cart footer stays reachable on a short viewport", async ({ page, isMobile }) => {
+    test.skip(!isMobile, "Mobile-only regression");
+
+    await page.setViewportSize({ width: 390, height: 600 });
+    await gotoCatalog(page);
+    await openFirstProductFromCatalog(page);
+    await addCurrentProductToBag(page);
+
+    await page.getByRole("link", { name: /view bag/i }).click();
+    await expect(page).toHaveURL(/\/cart/);
+
+    const mobileFooter = page.locator("[data-mobile-cart-footer]");
+    await expect(mobileFooter).toBeVisible();
+    await expect(mobileFooter.getByRole("link", { name: /checkout/i })).toBeVisible();
+  });
 });

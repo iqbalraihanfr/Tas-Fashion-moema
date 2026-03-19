@@ -30,4 +30,21 @@ test.describe('Guest Checkout Flow', () => {
     expect(url).toContain('text=');
     expect(message).toContain('John Doe');
   });
+
+  test("mobile checkout footer stays reachable on a short viewport", async ({ page, isMobile }) => {
+    test.skip(!isMobile, "Mobile-only regression");
+
+    await page.setViewportSize({ width: 390, height: 600 });
+    await gotoCatalog(page);
+    await openFirstProductFromCatalog(page);
+    await addCurrentProductToBag(page);
+    await page.getByRole('link', { name: /checkout/i }).click();
+
+    await expect(page).toHaveURL('/checkout');
+    const mobileFooter = page.locator("[data-mobile-checkout-footer]");
+    await expect(mobileFooter).toBeVisible();
+
+    await page.fill('input[name="phone"]', '08123456789');
+    await expect(mobileFooter.getByRole('button', { name: /order via whatsapp/i })).toBeVisible();
+  });
 });

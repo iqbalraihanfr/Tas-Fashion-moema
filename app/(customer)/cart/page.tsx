@@ -22,7 +22,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container pt-10 pb-20">
+    <div className="container pt-10 pb-36 lg:pb-20">
       <h1 className="text-3xl font-medium uppercase tracking-wide mb-10">Shopping Bag</h1>
 
       <div className="flex flex-col lg:flex-row gap-12">
@@ -110,6 +110,25 @@ export default function CartPage() {
           <p className="text-[10px] text-muted-foreground text-center mt-4">
             Taxes and shipping calculated at checkout.
           </p>
+        </div>
+      </div>
+
+      <div
+        data-mobile-cart-footer
+        className="fixed inset-x-0 bottom-[var(--mobile-consent-offset,0px)] z-[var(--z-sticky-cta)] border-t border-border bg-background/98 px-4 py-3 backdrop-blur lg:hidden"
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
+      >
+        <div className="container flex items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total</p>
+            <p className="text-sm font-medium">Rp {subtotal.toLocaleString("id-ID")}</p>
+          </div>
+          <Button size="lg" className="h-12 min-w-[10rem] uppercase tracking-widest text-xs rounded-none" asChild>
+            <Link href="/checkout">
+              <span>Checkout</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </Button>
         </div>
       </div>
     </div>
