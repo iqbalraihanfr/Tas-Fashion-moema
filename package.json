@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:mobile": "playwright test --project='Mobile Chrome' --project='Mobile Safari' tests/e2e/catalog-filters.spec.ts tests/e2e/storefront-smoke.spec.ts tests/e2e/mobile-navigation.spec.ts tests/e2e/guest-checkout.spec.ts tests/e2e/cart-regression.spec.ts",
     "test:e2e:smoke": "playwright test --workers=1 tests/e2e/catalog-filters.spec.ts tests/e2e/storefront-smoke.spec.ts tests/e2e/mobile-navigation.spec.ts tests/e2e/guest-checkout.spec.ts tests/e2e/cart-regression.spec.ts tests/e2e/admin-smoke.spec.ts tests/e2e/admin-product-smoke.spec.ts tests/e2e/admin-showcase-smoke.spec.ts tests/e2e/admin-order-smoke.spec.ts",
     "test:qa": "pnpm test && pnpm test:e2e:smoke"
   },

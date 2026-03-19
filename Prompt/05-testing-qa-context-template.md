@@ -59,6 +59,7 @@ Gunakan command berikut:
 pnpm test
 pnpm test:watch
 pnpm test:e2e
+pnpm test:e2e:mobile
 pnpm test:e2e:smoke
 pnpm test:qa
 ```
@@ -67,6 +68,7 @@ Catatan:
 
 - `pnpm test` menjalankan suite Vitest non-E2E.
 - `pnpm test:e2e` memakai Playwright dan akan menyalakan dev server lewat config.
+- `pnpm test:e2e:mobile` menjalankan baseline storefront mobile di `Mobile Chrome` dan `Mobile Safari`.
 - `pnpm test:e2e:smoke` menjalankan baseline smoke suite secara serial (`--workers=1`) agar mutation admin tidak saling bentrok di environment yang sama.
 - `pnpm test:qa` menjalankan Vitest lalu smoke E2E.
 
@@ -107,11 +109,11 @@ Flow E2E yang dianggap core saat ini:
 6. Admin product smoke: create → archive → restore → delete
 7. Admin showcase smoke: create → edit → delete
 8. Admin order smoke: fresh order → admin status update
-9. Semua smoke flow aktif diverifikasi di desktop Chrome dan mobile Chrome, kecuali admin smoke yang sengaja desktop-only
+9. Semua smoke flow aktif diverifikasi di desktop Chrome, mobile Chrome, dan mobile Safari, kecuali admin smoke yang sengaja desktop-only
 
 ### Playwright config
 
-- Browser: desktop Chrome + mobile Chrome
+- Browser: desktop Chrome + mobile Chrome + mobile Safari (WebKit)
 - Screenshot: only on failure
 - Trace: on first retry
 - Web server: `pnpm dev`
@@ -135,6 +137,10 @@ Flow E2E yang dianggap core saat ini:
 - Reusable helper ada di:
   - `tests/e2e/helpers/storefront.ts`
   - `tests/e2e/helpers/admin.ts`
+- Storefront mobile hardening yang sekarang dijaga smoke:
+  - mobile search state di header
+  - sticky add-to-bag bar setelah scroll PDP
+  - cart / filter / checkout flow pada viewport mobile
 
 ---
 
@@ -166,6 +172,7 @@ Saat menambah admin action baru, tambahkan test di `tests/lib/admin-actions.test
 - Belum ada coverage gate di CI.
 - E2E admin product edit flow belum cukup stabil untuk masuk smoke suite; saat ini smoke product fokus pada create/archive/restore/delete.
 - Lint global repo masih punya issue legacy di luar scope test setup.
+- Masih perlu observasi lanjutan di Safari fisik bila ada gesture atau keyboard issue yang tidak muncul di WebKit emulation.
 
 Jika ingin menaikkan level QA berikutnya, prioritas terbaik adalah:
 
